@@ -1,0 +1,20 @@
+# dbt Snowflake profile for open311_pipeline.
+# Copy to ~/.dbt/profiles.yml (or set DBT_PROFILES_DIR to this directory).
+# All sensitive values resolve from the same env vars used by the pipeline.
+
+open311_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('DBT_SNOWFLAKE_ACCOUNT', env_var('SNOWFLAKE_ACCOUNT')) }}"
+      user: "{{ env_var('DBT_SNOWFLAKE_USER', env_var('SNOWFLAKE_USER')) }}"
+      password: "{{ env_var('DBT_SNOWFLAKE_PASSWORD', env_var('SNOWFLAKE_PASSWORD')) }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'CIVIC_311') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      # Base schema; models override via +schema in dbt_project.yml so outputs
+      # land in CIVIC_311.ANALYTICS_STAGING / _INTERMEDIATE / _MARTS.
+      schema: ANALYTICS
+      threads: 4
+      client_session_keep_alive: False

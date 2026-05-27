@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_service_requests
+    description: "Cleaned, type-cast service requests. View materialization so classifier UPDATEs to the source table are picked up on the next dbt run without `--full-refresh`."
+    columns:
+      - name: service_request_id
+        description: "Stable Open311 identifier."
+        tests:
+          - unique
+          - not_null
+      - name: requested_datetime
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - not_null
+      - name: urgency_label
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Critical', 'High', 'Medium', 'Low', 'Unknown']

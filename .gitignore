@@ -1,0 +1,40 @@
+# Secrets & local-only config
+.env
+.env.local
+.env.*.local
+.env*copy*
+.certs/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+
+# dbt artifacts
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+dbt_project/profiles.yml
+profiles.yml
+
+# Runtime logs
+logs/
+*.log
+
+# Claude Code local overrides (shared config in .claude/settings.json may still be committed)
+.claude/settings.local.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+
+# Local-only scratch
+PROMPT.md
+dbt_project/.user.yml

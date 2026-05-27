@@ -1,0 +1,39 @@
+name: 'open311_pipeline'
+version: '1.0.0'
+config-version: 2
+
+profile: 'open311_pipeline'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+analysis-paths: ["analyses"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  open311_pipeline:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+vars:
+  # SLA thresholds in hours, keyed by urgency_label. "Unknown" is intentionally
+  # absent so the sla_threshold_hours macro returns NULL for unclassified rows
+  # and they are excluded from sla_pct calculations.
+  sla_thresholds:
+    Critical: 4
+    High: 24
+    Medium: 72
+    Low: 168

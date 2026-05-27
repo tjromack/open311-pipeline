@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: dim_request_category
+    description: "One row per service_code. Department from raw_payload.group; typical urgency is the modal classified label."
+    columns:
+      - name: service_code
+        tests:
+          - unique
+          - not_null
+      - name: service_name
+        tests:
+          - not_null
+      - name: typical_urgency_label
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Critical', 'High', 'Medium', 'Low', 'Unknown']
+
+  - name: fct_sla_compliance
+    description: "SLA compliance at department + service_code + month grain."
+    columns:
+      - name: department
+        tests:
+          - not_null
+      - name: service_code
+        tests:
+          - not_null
+      - name: month
+        tests:
+          - not_null
+      - name: total_requests
+        tests:
+          - not_null
+      - name: sla_pct
+        description: "Fraction of classified requests closed within SLA. NULL when no classified requests in the bucket."

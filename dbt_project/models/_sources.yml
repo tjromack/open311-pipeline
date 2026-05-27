@@ -1,0 +1,29 @@
+version: 2
+
+sources:
+  - name: civic_311
+    description: "Raw enriched service requests loaded by the streaming pipeline."
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'CIVIC_311') }}"
+    schema: RAW
+    tables:
+      - name: service_requests
+        identifier: SERVICE_REQUESTS
+        description: "One row per Chicago 311 service request, enriched with LLM urgency classification."
+        columns:
+          - name: service_request_id
+            description: "Stable Open311 service request identifier."
+            tests:
+              - unique
+              - not_null
+          - name: urgency_label
+            description: "LLM-assigned urgency tier. 'Unknown' for backfilled rows."
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['Critical', 'High', 'Medium', 'Low', 'Unknown']
+          - name: status
+            tests:
+              - not_null
+          - name: requested_datetime
+            tests:
+              - not_null

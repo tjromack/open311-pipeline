@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: pytest + dbt validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest tests/ -v
+
+      # dbt validation: `dbt parse` checks Jinja + YAML + ref/source graph without
+      # needing a live Snowflake connection. (`dbt compile` would also work but
+      # requires either real creds or a mock adapter; not worth it for CI.)
+      - name: Validate dbt project
+        env:
+          # The profile references env_var() calls; supply dummies so parse can
+          # resolve them. No actual queries run.
+          SNOWFLAKE_ACCOUNT: dummy
+          SNOWFLAKE_USER: dummy
+          SNOWFLAKE_PASSWORD: dummy
+          SNOWFLAKE_DATABASE: CIVIC_311
+          SNOWFLAKE_SCHEMA: RAW
+          SNOWFLAKE_WAREHOUSE: COMPUTE_WH
+          SNOWFLAKE_ROLE: ACCOUNTADMIN
+          DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
+        run: |
+          cp dbt_project/profiles.yml.example dbt_project/profiles.yml
+          dbt parse --project-dir dbt_project
