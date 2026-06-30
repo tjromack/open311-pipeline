@@ -49,11 +49,17 @@ Real categories where the model surfaces interesting signal:
 
 ## Demo
 
-> _📸 Screenshot placeholders — capture from your own run and drop into `docs/`:_
->
-> - `docs/langfuse-trace.png` — a Langfuse trace showing the urgency classification span, input prompt, structured output, token counts, and tags.
-> - `docs/dbt-lineage.png` — `dbt docs serve` lineage graph: `source.civic_311.service_requests → stg_service_requests → int_resolved_requests → fct_sla_compliance`.
-> - `docs/snowflake-sla.png` — a Snowflake worksheet running `SELECT service_name, sla_pct, avg_days_to_close FROM CIVIC_311.ANALYTICS_MARTS.FCT_SLA_COMPLIANCE ORDER BY classified_requests DESC LIMIT 10;`
+**Langfuse trace** — one urgency classification span: input prompt, structured output, token counts, and `[city, service_code, urgency_classification]` tags.
+
+![Langfuse trace for an urgency classification](docs/langfuse-trace.png)
+
+**dbt lineage** — `source.civic_311.service_requests → stg_service_requests → int_resolved_requests → fct_sla_compliance`.
+
+![dbt docs lineage graph](docs/dbt-lineage.png)
+
+**Snowflake SLA mart** — top categories by SLA compliance from `CIVIC_311.ANALYTICS_MARTS.FCT_SLA_COMPLIANCE`.
+
+![Snowflake worksheet showing SLA compliance by category](docs/snowflake-sla.png)
 
 ---
 

@@ -81,11 +81,10 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 
 ### Remaining items (user-driven)
 
-- [ ] **Capture real screenshots** and drop them in `docs/`:
-  - `docs/langfuse-trace.png` — Langfuse trace for one urgency classification
-  - `docs/dbt-lineage.png` — `dbt docs serve` lineage graph
-  - `docs/snowflake-sla.png` — Snowflake worksheet with top categories by `sla_pct`
-- [ ] **Push to GitHub** — `gh repo create` is already done at https://github.com/tjromack/open311-pipeline; first push is the remaining step
+- [x] **Capture real screenshots** — `docs/langfuse-trace.png`, `docs/dbt-lineage.png`, `docs/snowflake-sla.png` captured, committed, and embedded in the README Demo section
+- [x] **Push to GitHub** — pushed to https://github.com/tjromack/open311-pipeline (`origin/main` up to date)
+- [x] **Set repo description + topics** — one-line pitch and 15 topics applied via `gh repo edit`
+- [ ] **Flip repo to public** — currently private; make public once final review passes (`gh repo edit --visibility public`)
 - [ ] **Tag `v1.0.0`** — `git tag v1.0.0 && git push --tags`; create GitHub release with the CHANGELOG body
 - [ ] **Portfolio post** — share Langfuse trace screenshot + SLA compliance chart on LinkedIn/Twitter/personal site
 
