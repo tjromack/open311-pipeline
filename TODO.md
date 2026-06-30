@@ -85,7 +85,7 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] **Push to GitHub** — pushed to https://github.com/tjromack/open311-pipeline (`origin/main` up to date)
 - [x] **Set repo description + topics** — one-line pitch and 15 topics applied via `gh repo edit`
 - [ ] **Flip repo to public** — currently private; make public once final review passes (`gh repo edit --visibility public`)
-- [ ] **Tag `v1.0.0`** — `git tag v1.0.0 && git push --tags`; create GitHub release with the CHANGELOG body
+- [x] **Tag `v1.0.0`** — tag pushed and GitHub release published at https://github.com/tjromack/open311-pipeline/releases/tag/v1.0.0 (release body from CHANGELOG; tag points at the v1.0.0 code state, commit `4670402`)
 - [ ] **Portfolio post** — share Langfuse trace screenshot + SLA compliance chart on LinkedIn/Twitter/personal site
 
 ### Stretch / nice-to-have follow-ups (not blocking v1.0.0)
