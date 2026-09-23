@@ -22,7 +22,7 @@ The pipeline is a reusable template for the pattern: **stream → classify → w
 | LLM tracing | **Langfuse** (cloud or self-hosted) | Native LangChain integration; traces each classification call |
 | Data warehouse | **Snowflake** | Columnar, scales, dbt-native; fulfills portfolio gap |
 | Transformation | **dbt Core** | SQL-based SLA models, tests, docs |
-| Orchestration | **Python 3.11** with `asyncio` + `schedule` | Lightweight; no Airflow overkill for Phase 1 |
+| Orchestration | **Python 3.12** with `asyncio` + `schedule` | Lightweight; no Airflow overkill for Phase 1 |
 | Containerization | **Docker Compose** | Kafka + Zookeeper + optional local Langfuse |
 | Config/secrets | **python-dotenv** + `.env` file | Never hardcode credentials |
 | Dependency mgmt | **uv** (or pip + requirements.txt) | Fast installs |
@@ -233,3 +233,11 @@ DBT_SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
 - **Do NOT** hardcode SLA thresholds in SQL — they live in `dbt_project.yml` vars only
 - **Do NOT** poll the 311 API faster than 30-second intervals — respect rate limits even with an API key
 - **Do NOT** store `raw_payload` as a string — use Snowflake `VARIANT` type for the JSON column
+
+## Case study voice
+State plainly what the system is, what it does, the decisions made, and what was learned.
+
+- No disclaimers about the author's experience. Limits belong to the system, stated as scope or cost.
+- No honesty signalling ("the honest version", "published as a loss"). State the number.
+- No apologising for scale. State the numbers and the design target.
+- Real limits, costs, and failures stay — as facts about the system, not confessions.
