@@ -27,7 +27,7 @@ model saw only `service_name`, `service_code`, `status` and `address`.
 
 ```bash
 make backfill DAYS=7              # needs network, no keys
-make classify LIMIT=300 SEED=311  # needs ANTHROPIC_API_KEY (~$0.20)
+make classify LIMIT=300 SEED=311  # needs ANTHROPIC_API_KEY (~$0.54 at ~1,290 in / ~100 out tokens per call)
 make export-fixture
 ```
 

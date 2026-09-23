@@ -27,6 +27,8 @@ make demo-local          # Docker running: fixture -> Kafka -> consumer -> DuckD
 make demo-local-nokafka  # no Docker: fixture -> DuckDB -> dbt build -> SLA report  (~10 s)
 ```
 
+![make demo-local: 300 requests through Kafka, classified, merged into DuckDB, dbt build 25/25, SLA report](docs/demo.gif)
+
 The demo replays **300 real Chicago 311 requests** with the labels Claude Haiku 4.5 actually gave them
 ([`data/fixtures/`](data/fixtures/README.md)). They go through the same consumer, `MERGE` writer and dbt
 project as a live run. Only the LLM call is swapped for a lookup (`CLASSIFIER_MODE=replay`), and a request
@@ -58,7 +60,9 @@ account with SQL.
 
 Run on **2026-09-23** against the live API: a 7-day backfill of closed requests (**7,493** unique rows,
 **125** categories). From those, a seeded random **300** were classified by `claude-haiku-4-5-20251001`,
-with 300/300 succeeding in 376 s sequentially. `make demo-local-nokafka` reproduces every number below.
+with 300/300 succeeding in 376 s sequentially (~0.8 requests/s). Each call used ~1,290 input and ~100
+output tokens, about $0.0018 at Haiku 4.5's $1 / $5 per million tokens, so ~$0.54 for the 300 and ~$1.80 per
+1,000 requests. `make demo-local-nokafka` reproduces every SLA number below.
 
 - **87.0%** pooled SLA compliance (261 of 300 classified requests closed within their tier's threshold)
 - By tier: Critical **8/14**, High **51/72**, Medium **49/61**, Low **153/153**
@@ -83,7 +87,8 @@ Where the model's urgency and the city's close times disagree:
 > days is borderline. The "gap" depends on a label a human disagreed with, so it is a lead, not a finding.
 
 **Earlier Snowflake run (May 2026).** The Snowflake path was verified live on 2026-05-27: 7,200 rows
-backfilled, 300 classified, 0 duplicates across two backfills, and 20/20 dbt tests passing (screenshot below).
+backfilled, 300 classified, 0 duplicates across two backfills, and the 20 dbt tests of that version passing
+(screenshot below).
 The Snowflake trial has since expired, so those rows can't be re-queried, and the numbers above replace them.
 
 ---
