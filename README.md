@@ -4,6 +4,8 @@
 
 **Demonstrates:** Streaming LLM classification into a warehouse with idempotent MERGEs, a DLQ, and dbt tests that fail on drift.
 
+**Case study:** [tjromack.com/work/open311-pipeline](https://tjromack.com/work/open311-pipeline/): the decisions, what broke, and how it's verified.
+
 [![CI](https://github.com/tjromack/open311-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/tjromack/open311-pipeline/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python_3.12-3776AB?style=flat&logo=python&logoColor=white)
 ![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=flat&logo=apachekafka&logoColor=white)
@@ -354,7 +356,8 @@ commit, run `dbt run --full-refresh` once.
 
 ## Roadmap
 
-See [`TODO.md`](TODO.md) and [`CHANGELOG.md`](CHANGELOG.md).
+See [`TODO.md`](TODO.md) and [`CHANGELOG.md`](CHANGELOG.md). The design decisions and what they cost are written up in the
+[case study](https://tjromack.com/work/open311-pipeline/).
 
 ## License
 
