@@ -7,7 +7,7 @@ PYTHON ?= python
 DBT_PROJECT_DIR ?= dbt_project
 export DBT_PROFILES_DIR ?= $(CURDIR)/$(DBT_PROJECT_DIR)
 
-.PHONY: help demo-local demo-local-nokafka up topics run classify backfill export-fixture report dbt dbt-test docs docs-serve test lint teardown
+.PHONY: help demo-local demo-local-nokafka up topics run classify backfill export-fixture report label-sheet score-labels dbt dbt-test docs docs-serve test lint teardown
 
 help:                  ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -38,6 +38,12 @@ export-fixture:        ## Export classified DuckDB rows to data/fixtures/ for th
 
 report:                ## Print the SLA compliance mart from the local DuckDB warehouse.
 	$(PYTHON) scripts/sla_report.py
+
+label-sheet:           ## Write the blind 50-row hand-labeling sheet (eval/labels/label_sheet.csv).
+	$(PYTHON) scripts/make_label_sheet.py
+
+score-labels:          ## Score model labels vs. hand-labels -> eval/RESULTS.md.
+	$(PYTHON) scripts/score_labels.py
 
 $(DBT_PROJECT_DIR)/profiles.yml:
 	cp $(DBT_PROJECT_DIR)/profiles.yml.example $@
