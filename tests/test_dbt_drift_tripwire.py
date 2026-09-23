@@ -55,6 +55,30 @@ def _failed_nodes(result) -> set[str]:
     return {r.node.name for r in result.result if str(r.status) in ("fail", "error")}
 
 
+def _skipped_nodes(result) -> set[str]:
+    return {r.node.name for r in result.result if str(r.status) == "skipped"}
+
+
+# Everything downstream of staging: the three models the tripwire protects and
+# every test on them. Fixed by the project graph, not the dbt version or target;
+# adding a model or test below staging changes it on purpose.
+DOWNSTREAM_OF_TRIPWIRE = {
+    "int_resolved_requests",
+    "dim_request_category",
+    "fct_sla_compliance",
+    "accepted_values_dim_request_category_typical_urgency_label__Critical__High__Medium__Low__Unknown",
+    "not_null_dim_request_category_service_code",
+    "not_null_dim_request_category_service_name",
+    "unique_dim_request_category_service_code",
+    "not_null_fct_sla_compliance_department",
+    "not_null_fct_sla_compliance_month",
+    "not_null_fct_sla_compliance_service_code",
+    "not_null_fct_sla_compliance_total_requests",
+    "assert_fct_sla_grain_unique",
+    "assert_sla_pct_between_0_and_1",
+}
+
+
 def test_clean_fixture_builds_green(tmp_path, monkeypatch):
     db = tmp_path / "clean.duckdb"
     _load(db, rename_close_time=False)
@@ -68,3 +92,5 @@ def test_renamed_close_time_fails_the_build_loudly(tmp_path, monkeypatch):
     result = _dbt_build(tmp_path, monkeypatch, db)
     assert not result.success
     assert _failed_nodes(result) == {TRIPWIRE}
+    assert _skipped_nodes(result) == DOWNSTREAM_OF_TRIPWIRE
+    assert len(DOWNSTREAM_OF_TRIPWIRE) == 13

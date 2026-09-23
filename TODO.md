@@ -87,8 +87,8 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] **Set repo description + topics** — one-line pitch and 15 topics applied via `gh repo edit`
 - [x] **Flip repo to public**
 - [x] **Tag `v1.0.0`** — tag pushed and GitHub release published at https://github.com/tjromack/open311-pipeline/releases/tag/v1.0.0 (release body from CHANGELOG; tag points at the v1.0.0 code state, commit `4670402`)
-- [ ] **Portfolio case study** — /work write-up to the playbook template (situation, constraints, design + rejected alternative, verification, what broke, limits, what I'd do differently)
-- [ ] **Portfolio card** — featured, demonstrates line, tryIt, verifiedBy pills
+- [x] **Portfolio case study** — written to the site's template (Overview, The problem, Constraints, Architecture, Key decisions, What broke, How it's verified, What I'd do differently, Limits, Links); staged privately, awaiting a read-through before it goes public
+- [x] **Portfolio card** — /builds tile carries the README's Demonstrates line verbatim, "Try it: make demo-local" linking to `#try-it--no-accounts-no-api-keys`, and four evidence pills (53 pytest tests, 21 dbt tests, schema-drift tripwire, blind-label κ 0.32 on 50 rows). "Featured" is first position on the page, since a tile has no featured state
 
 ### Portfolio audit remediation (2026-09-23, branch `portfolio/audit-remediation`)
 
