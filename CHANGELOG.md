@@ -6,6 +6,41 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+Portfolio-audit remediation: the repo now runs from a fresh clone with no
+accounts, and its verification evidence is published.
+
+### Added
+
+- **Local DuckDB mode.** `WAREHOUSE_BACKEND=duckdb` (now the default) writes
+  through `DuckDBWriter` with the same `MERGE`-on-`service_request_id`
+  contract as Snowflake; dbt gains a `local` (dbt-duckdb) target alongside
+  `snowflake`. Two dispatched macros cover the only Snowflake-specific SQL.
+- **Zero-credential replay demo.** `make demo-local` / `demo-local-nokafka`
+  replay 300 real Chicago requests with their recorded Claude labels
+  (`CLASSIFIER_MODE=replay`, fixture in `data/fixtures/`). CI runs it.
+- **Schema-drift detection.** Poller logs an aggregated
+  `open311_schema_drift` warning against the observed key set; dbt test
+  `assert_closed_requests_have_close_time` fails the build if close times
+  disappear. Tests cover 10 drift scenarios plus an end-to-end dbt run.
+- **Blind hand-label harness.** `make label-sheet` / `make score-labels`
+  (agreement, Cohen's and quadratic-weighted kappa, confusion matrix).
+- `scripts/sla_report.py`, `scripts/export_fixture.py`,
+  `scripts/load_fixture.py`; `classify_existing --sample-seed`;
+  `classifier.consumer --exit-when-idle`.
+- README: try-it path, published results, "How it's verified", payload-drift
+  behaviour, Langfuse drift signals, and a limits section.
+
+### Fixed
+
+- Fresh installs failed test collection: an unpinned resolve paired
+  `cryptography` 46 with `pyOpenSSL` 22, which crash the Snowflake connector
+  at import. Both are now pinned.
+- `python scripts/<name>.py` failed with `ModuleNotFoundError` outside a
+  shell that had `PYTHONPATH` set.
+- A non-object record in an Open311 response crashed the whole poll tick.
+- Shell scripts and the Makefile are pinned to LF so they run after a
+  Windows checkout.
+
 ## [1.0.0] — 2026-05-27
 
 First end-to-end release. The pipeline ingests live Chicago Open311 events,

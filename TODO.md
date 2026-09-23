@@ -88,6 +88,16 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] **Tag `v1.0.0`** — tag pushed and GitHub release published at https://github.com/tjromack/open311-pipeline/releases/tag/v1.0.0 (release body from CHANGELOG; tag points at the v1.0.0 code state, commit `4670402`)
 - [ ] **Portfolio post** — share Langfuse trace screenshot + SLA compliance chart on LinkedIn/Twitter/personal site
 
+### Portfolio audit remediation (2026-09-23, branch `portfolio/audit-remediation`)
+
+- [x] G1: pin `cryptography` / `pyOpenSSL` so a fresh clone collects tests; state Python 3.12
+- [x] G1/G6: local DuckDB mode + zero-credential replay demo (`make demo-local`, CI runs the no-Kafka variant)
+- [ ] G6: verify `make demo-local` through Kafka with Docker running
+- [ ] G4: hand-label the 50-row blind sheet (`eval/labels/label_sheet.csv`), run `make score-labels`, write the error analysis in `eval/RESULTS.md`, fill the README `[TKTK]`
+- [x] G3: schema-drift tests + dbt tripwire; README documents what fails loudly and what doesn't
+- [x] G5/G8: limits section and demonstrates line
+- [ ] Record a demo GIF of `make demo-local` for the README / portfolio card
+
 ### Stretch / nice-to-have follow-ups (not blocking v1.0.0)
 
 - [ ] **Department mapping** — `dim_request_category.department` is mostly NULL because Open311's `group` field lives only on the services catalog, not on requests. Fix by seeding a `service_code → department` CSV, or pulling `services.json` during backfill and joining.
