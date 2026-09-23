@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 import structlog
 from dotenv import load_dotenv
+from snowflake.connector import DictCursor
 from snowflake.connector import connect as snowflake_connect
 
-from ingestion.schemas import EnrichedRequest
+from ingestion.schemas import EnrichedRequest, ServiceRequest
+from warehouse import COLUMNS as _COLUMNS
 
 load_dotenv()
 
@@ -18,24 +20,6 @@ log = structlog.get_logger(__name__)
 
 DEFAULT_BATCH_SIZE = 100
 
-_COLUMNS: tuple[str, ...] = (
-    "service_request_id",
-    "requested_datetime",
-    "service_name",
-    "service_code",
-    "status",
-    "address",
-    "lat",
-    "lon",
-    "city",
-    "raw_payload",
-    "urgency_label",
-    "urgency_score",
-    "llm_reasoning",
-    "langfuse_trace_id",
-    "classified_at",
-    "days_to_close",
-)
 _NUM_COLUMNS = len(_COLUMNS)
 
 
@@ -179,6 +163,34 @@ class SnowflakeWriter:
         log.info("snowflake_upsert_batch", rows=total, table=self.fq_table)
         return total
 
+    def fetch_unclassified(
+        self, limit: Optional[int] = None, sample_seed: Optional[int] = None
+    ) -> list[ServiceRequest]:
+        """Rows still labelled 'Unknown', oldest first or in a seeded pseudo-random order."""
+        order = (
+            f"HASH(service_request_id, {int(sample_seed)})"
+            if sample_seed is not None
+            else "requested_datetime"
+        )
+        sql = f"""
+            SELECT
+                service_request_id, requested_datetime, service_name, service_code,
+                status, address, lat, lon, city, raw_payload
+            FROM {self.fq_table}
+            WHERE urgency_label = 'Unknown'
+            ORDER BY {order}
+        """
+        if limit is not None:
+            sql += f"\n            LIMIT {int(limit)}"
+
+        cur = self.connect().cursor(DictCursor)
+        try:
+            cur.execute(sql)
+            rows = cur.fetchall()
+        finally:
+            cur.close()
+        return [_row_to_service_request(r) for r in rows]
+
     def execute_ddl(self, ddl_sql: str) -> None:
         """Apply DDL statements (semicolon-separated) against the connection.
 
@@ -216,3 +228,32 @@ class SnowflakeWriter:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
+
+
+def _row_to_service_request(row: dict[str, Any]) -> ServiceRequest:
+    """Reconstruct a ServiceRequest from a Snowflake DictCursor row.
+
+    VARIANT columns come back as JSON-serialized strings from the connector;
+    deserialize raw_payload so the Pydantic model receives a real dict.
+    """
+    raw_payload = row.get("RAW_PAYLOAD")
+    if isinstance(raw_payload, str):
+        try:
+            raw_payload = json.loads(raw_payload)
+        except json.JSONDecodeError:
+            raw_payload = {}
+    elif raw_payload is None:
+        raw_payload = {}
+
+    return ServiceRequest(
+        service_request_id=row["SERVICE_REQUEST_ID"],
+        requested_datetime=row["REQUESTED_DATETIME"],
+        service_name=row.get("SERVICE_NAME") or "",
+        service_code=row.get("SERVICE_CODE") or "",
+        status=row.get("STATUS") or "open",
+        address=row.get("ADDRESS") or "",
+        lat=row.get("LAT"),
+        lon=row.get("LON"),
+        city=row.get("CITY") or "chicago",
+        raw_payload=raw_payload,
+    )

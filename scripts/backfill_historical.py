@@ -1,17 +1,25 @@
-"""Backfill Chicago 311 service requests into Snowflake. Skips LLM classification."""
+"""Backfill Chicago 311 service requests into the warehouse. Skips LLM classification.
+
+Writes to DuckDB by default, or Snowflake with WAREHOUSE_BACKEND=snowflake.
+"""
 
 from __future__ import annotations
 
 import argparse
+import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Optional
+
+# Let `python scripts/<name>.py` import the project packages from a fresh clone.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import structlog
 from dotenv import load_dotenv
 
 from ingestion.open311_poller import Open311Poller
 from ingestion.schemas import EnrichedRequest, ServiceRequest
-from warehouse.snowflake_writer import SnowflakeWriter
+from warehouse import build_writer
 
 load_dotenv()
 
@@ -39,7 +47,7 @@ def backfill(
     batch_size: int = 100,
     page_size: int = 200,
 ) -> int:
-    """Pull the past `days` of requests from Chicago 311 and MERGE them into Snowflake."""
+    """Pull the past `days` of requests from Chicago 311 and MERGE them into the warehouse."""
     end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=days)
     now = end_date
@@ -56,7 +64,7 @@ def backfill(
     total = 0
     buffer: list[EnrichedRequest] = []
 
-    with SnowflakeWriter(batch_size=batch_size) as writer:
+    with build_writer(batch_size=batch_size) as writer:
         for req in poller.fetch_window(
             start_date=start_date,
             end_date=end_date,
@@ -78,7 +86,7 @@ def backfill(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Backfill Chicago 311 service requests into Snowflake."
+        description="Backfill Chicago 311 service requests into the warehouse."
     )
     parser.add_argument(
         "--days",
@@ -96,7 +104,7 @@ def _parse_args() -> argparse.Namespace:
         "--batch-size",
         type=int,
         default=100,
-        help="Rows per Snowflake MERGE statement (default: 100).",
+        help="Rows per MERGE statement (default: 100).",
     )
     parser.add_argument(
         "--page-size",

@@ -26,3 +26,8 @@ pyOpenSSL==24.3.0
 
 # Phase 4 — dbt SLA analytics (pulls in dbt-core)
 dbt-snowflake==1.8.4
+
+# Local mode — DuckDB warehouse + dbt adapter (no Snowflake account needed).
+# duckdb >= 1.4 is required for MERGE INTO.
+duckdb==1.5.5
+dbt-duckdb==1.11.0

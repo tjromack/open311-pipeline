@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import signal
@@ -15,7 +16,7 @@ from dotenv import load_dotenv
 
 from classifier.urgency_classifier import UrgencyClassifier
 from ingestion.schemas import EnrichedRequest, ServiceRequest
-from warehouse.snowflake_writer import SnowflakeWriter
+from warehouse import build_writer, warehouse_backend
 
 load_dotenv()
 
@@ -54,6 +55,18 @@ def _flush_langfuse(handler) -> None:
                 log.warning("langfuse_flush_failed", method=attr, error=str(exc))
 
 
+def _build_classifier(langfuse_handler):
+    """CLASSIFIER_MODE=live (default) calls Claude; replay reuses recorded labels."""
+    mode = os.environ.get("CLASSIFIER_MODE", "live").strip().lower()
+    if mode == "replay":
+        from classifier.replay_classifier import ReplayClassifier
+
+        return ReplayClassifier()
+    if mode != "live":
+        raise ValueError(f"CLASSIFIER_MODE must be 'live' or 'replay', got {mode!r}")
+    return UrgencyClassifier(langfuse_handler=langfuse_handler)
+
+
 class ClassifierConsumer:
     """Consumes raw service requests, classifies them, and produces to a sink."""
 
@@ -68,7 +81,7 @@ class ClassifierConsumer:
         consumer: Optional[Consumer] = None,
         dlq_producer: Optional[Producer] = None,
         flush_every_n: Optional[int] = None,
-        snowflake_writer: Optional[SnowflakeWriter] = None,
+        snowflake_writer=None,
         lag_log_every_n: Optional[int] = None,
     ) -> None:
         self.raw_topic = os.environ.get("KAFKA_RAW_TOPIC", "civic.requests.raw")
@@ -77,9 +90,7 @@ class ClassifierConsumer:
         group_id = os.environ.get("KAFKA_CONSUMER_GROUP", "urgency-classifier-group")
 
         self.langfuse_handler = _build_langfuse_handler()
-        self.classifier = classifier or UrgencyClassifier(
-            langfuse_handler=self.langfuse_handler
-        )
+        self.classifier = classifier or _build_classifier(self.langfuse_handler)
 
         self.consumer = consumer or Consumer(
             {
@@ -98,6 +109,8 @@ class ClassifierConsumer:
         )
         self._messages_since_flush = 0
         self._running = False
+        # Any writer with upsert_batch()/close(): SnowflakeWriter or DuckDBWriter.
+        # Attribute name kept for backwards compatibility with existing callers.
         self.snowflake_writer = snowflake_writer
 
         # Observability state
@@ -230,18 +243,39 @@ class ClassifierConsumer:
         if self.lag_log_every_n > 0 and self._messages_processed % self.lag_log_every_n == 0:
             self._log_consumer_lag()
 
-    def run(self) -> None:
-        """Subscribe and loop until SIGINT/SIGTERM."""
+    def run(self, exit_when_idle: Optional[float] = None) -> None:
+        """Subscribe and loop until SIGINT/SIGTERM.
+
+        With `exit_when_idle`, also stop once no message has arrived for that
+        many seconds — used by the local demo to drain the topic and exit.
+        """
         self.consumer.subscribe([self.raw_topic])
         self._install_signal_handlers()
         self._running = True
-        log.info("consumer_started", topic=self.raw_topic, dlq=self.dlq_topic)
+        log.info(
+            "consumer_started",
+            topic=self.raw_topic,
+            dlq=self.dlq_topic,
+            exit_when_idle=exit_when_idle,
+        )
+        last_message_at = time.monotonic()
 
         try:
             while self._running:
                 msg = self.consumer.poll(1.0)
                 if msg is None:
+                    if (
+                        exit_when_idle is not None
+                        and time.monotonic() - last_message_at >= exit_when_idle
+                    ):
+                        log.info(
+                            "consumer_idle_exit",
+                            idle_seconds=exit_when_idle,
+                            messages_processed=self._messages_processed,
+                        )
+                        break
                     continue
+                last_message_at = time.monotonic()
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         continue
@@ -282,14 +316,34 @@ class ClassifierConsumer:
         log.info("consumer_shutdown_complete")
 
 
-def _build_writer_from_env() -> Optional[SnowflakeWriter]:
-    """Construct a SnowflakeWriter if Snowflake creds are configured; else None."""
-    required = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
-    if not all(os.environ.get(k) for k in required):
-        log.warning("snowflake_not_configured", reason="missing required env vars")
-        return None
-    return SnowflakeWriter()
+def _build_writer_from_env():
+    """Build the configured warehouse writer (DuckDB by default).
+
+    For WAREHOUSE_BACKEND=snowflake with missing creds, return None so the
+    consumer still classifies (and traces) without a sink.
+    """
+    if warehouse_backend() == "snowflake":
+        required = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD")
+        if not all(os.environ.get(k) for k in required):
+            log.warning("snowflake_not_configured", reason="missing required env vars")
+            return None
+    return build_writer(batch_size=1)
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Kafka -> urgency classifier -> warehouse")
+    parser.add_argument(
+        "--exit-when-idle",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Stop after this many seconds with no new messages (default: run forever).",
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    ClassifierConsumer(snowflake_writer=_build_writer_from_env()).run()
+    args = _parse_args()
+    ClassifierConsumer(snowflake_writer=_build_writer_from_env()).run(
+        exit_when_idle=args.exit_when_idle
+    )

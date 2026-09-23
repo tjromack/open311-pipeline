@@ -28,10 +28,18 @@ jobs:
       - name: Run unit tests
         run: pytest tests/ -v
 
+      # Clean-clone check of the documented try-it path: load the committed
+      # replay fixture (real Chicago 311 rows + recorded Claude labels) into
+      # DuckDB and run `dbt build`, so every model and data test executes
+      # against real data on every push. Kafka is skipped in CI; the dbt layer
+      # is identical.
+      - name: Local demo (DuckDB, no credentials)
+        run: bash scripts/demo_local.sh --no-kafka
+
       # dbt validation: `dbt parse` checks Jinja + YAML + ref/source graph without
       # needing a live Snowflake connection. (`dbt compile` would also work but
       # requires either real creds or a mock adapter; not worth it for CI.)
-      - name: Validate dbt project
+      - name: Validate dbt project (Snowflake target)
         env:
           # The profile references env_var() calls; supply dummies so parse can
           # resolve them. No actual queries run.
@@ -43,6 +51,7 @@ jobs:
           SNOWFLAKE_WAREHOUSE: COMPUTE_WH
           SNOWFLAKE_ROLE: ACCOUNTADMIN
           DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
+          DBT_TARGET: snowflake
         run: |
-          cp dbt_project/profiles.yml.example dbt_project/profiles.yml
+          cp -n dbt_project/profiles.yml.example dbt_project/profiles.yml || true
           dbt parse --project-dir dbt_project

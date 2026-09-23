@@ -19,7 +19,7 @@ with_close_time as (
 
     select
         *,
-        try_to_timestamp_ntz(raw_payload:updated_datetime::string) as updated_datetime
+        {{ try_to_timestamp(json_text('raw_payload', 'updated_datetime')) }} as updated_datetime
     from closed
 
 ),
@@ -43,7 +43,7 @@ final as (
         urgency_label,
         urgency_score,
         classified_at,
-        raw_payload:group::string as department,
+        {{ json_text('raw_payload', 'group') }} as department,
         {{ sla_threshold_hours('urgency_label') }} as sla_threshold_hours,
         case
             when {{ sla_threshold_hours('urgency_label') }} is null then null

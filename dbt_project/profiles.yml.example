@@ -1,15 +1,31 @@
-# dbt Snowflake profile for open311_pipeline.
-# Copy to ~/.dbt/profiles.yml (or set DBT_PROFILES_DIR to this directory).
-# All sensitive values resolve from the same env vars used by the pipeline.
+# dbt profile for open311_pipeline.
+# Copy to dbt_project/profiles.yml (gitignored) and set DBT_PROFILES_DIR to
+# this directory — `make dbt` / `make demo-local` do both for you.
+#
+# Two targets, chosen by DBT_TARGET (default: local):
+#   local     — DuckDB file written by the pipeline's DuckDBWriter. No account,
+#               no credentials. Path matches DUCKDB_PATH (relative to the repo root).
+#   snowflake — the original warehouse. All sensitive values resolve from the
+#               same env vars used by the pipeline.
 
 open311_pipeline:
-  target: dev
+  target: "{{ env_var('DBT_TARGET', 'local') }}"
   outputs:
-    dev:
+    local:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/civic_311.duckdb') }}"
+      # Base schema; models override via +schema in dbt_project.yml so outputs
+      # land in ANALYTICS_staging / _intermediate / _marts, mirroring Snowflake.
+      schema: ANALYTICS
+      threads: 1
+      settings:
+        TimeZone: UTC
+
+    snowflake:
       type: snowflake
-      account: "{{ env_var('DBT_SNOWFLAKE_ACCOUNT', env_var('SNOWFLAKE_ACCOUNT')) }}"
-      user: "{{ env_var('DBT_SNOWFLAKE_USER', env_var('SNOWFLAKE_USER')) }}"
-      password: "{{ env_var('DBT_SNOWFLAKE_PASSWORD', env_var('SNOWFLAKE_PASSWORD')) }}"
+      account: "{{ env_var('DBT_SNOWFLAKE_ACCOUNT', env_var('SNOWFLAKE_ACCOUNT', '')) }}"
+      user: "{{ env_var('DBT_SNOWFLAKE_USER', env_var('SNOWFLAKE_USER', '')) }}"
+      password: "{{ env_var('DBT_SNOWFLAKE_PASSWORD', env_var('SNOWFLAKE_PASSWORD', '')) }}"
       role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE', 'CIVIC_311') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"

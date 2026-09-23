@@ -3,7 +3,8 @@ version: 2
 sources:
   - name: civic_311
     description: "Raw enriched service requests loaded by the streaming pipeline."
-    database: "{{ env_var('SNOWFLAKE_DATABASE', 'CIVIC_311') }}"
+    # Snowflake: the CIVIC_311 database. DuckDB: the local file's catalog.
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'CIVIC_311') if target.type == 'snowflake' else target.database }}"
     schema: RAW
     tables:
       - name: service_requests

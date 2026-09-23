@@ -22,6 +22,10 @@ dbt_project/dbt_packages/
 dbt_project/profiles.yml
 profiles.yml
 
+# Local DuckDB warehouses (the committed replay fixture lives in data/fixtures/)
+data/*.duckdb
+data/*.duckdb.wal
+
 # Runtime logs
 logs/
 *.log

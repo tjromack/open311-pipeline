@@ -9,7 +9,7 @@ with src as (
     select
         service_code,
         service_name,
-        raw_payload:group::string as department,
+        {{ json_text('raw_payload', 'group') }} as department,
         urgency_label
     from {{ ref('stg_service_requests') }}
     where service_code is not null

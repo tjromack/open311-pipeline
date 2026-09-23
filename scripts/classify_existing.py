@@ -1,25 +1,28 @@
-"""Classify rows in Snowflake that were backfilled with urgency_label='Unknown'.
+"""Classify warehouse rows that were backfilled with urgency_label='Unknown'.
 
 Reuses the streaming pipeline's UrgencyClassifier (Claude Haiku 4.5 + Langfuse
-tracing) and SnowflakeWriter (MERGE on service_request_id). One-off; the
-streaming consumer remains the primary path for new requests.
+tracing) and the configured warehouse writer (MERGE on service_request_id).
+One-off; the streaming consumer remains the primary path for new requests.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import os
+import sys
 import time
-from typing import Any, Optional
+from pathlib import Path
+from typing import Optional
+
+# Let `python scripts/<name>.py` import the project packages from a fresh clone.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import structlog
 from dotenv import load_dotenv
-from snowflake.connector import DictCursor
 
 from classifier.urgency_classifier import UrgencyClassifier
-from ingestion.schemas import EnrichedRequest, ServiceRequest
-from warehouse.snowflake_writer import SnowflakeWriter
+from ingestion.schemas import EnrichedRequest
+from warehouse import build_writer
 
 load_dotenv()
 
@@ -45,64 +48,20 @@ def _build_langfuse_handler():
     )
 
 
-def _row_to_service_request(row: dict[str, Any]) -> ServiceRequest:
-    """Reconstruct a ServiceRequest from a Snowflake row.
-
-    VARIANT columns come back as JSON-serialized strings from the connector;
-    deserialize raw_payload so the Pydantic model receives a real dict.
-    """
-    raw_payload = row.get("RAW_PAYLOAD")
-    if isinstance(raw_payload, str):
-        try:
-            raw_payload = json.loads(raw_payload)
-        except json.JSONDecodeError:
-            raw_payload = {}
-    elif raw_payload is None:
-        raw_payload = {}
-
-    return ServiceRequest(
-        service_request_id=row["SERVICE_REQUEST_ID"],
-        requested_datetime=row["REQUESTED_DATETIME"],
-        service_name=row.get("SERVICE_NAME") or "",
-        service_code=row.get("SERVICE_CODE") or "",
-        status=row.get("STATUS") or "open",
-        address=row.get("ADDRESS") or "",
-        lat=row.get("LAT"),
-        lon=row.get("LON"),
-        city=row.get("CITY") or "chicago",
-        raw_payload=raw_payload,
-    )
-
-
 def classify_existing(
     limit: Optional[int] = None,
     write_batch_size: int = 50,
     progress_every: int = 10,
+    sample_seed: Optional[int] = None,
 ) -> int:
     """Classify all rows where urgency_label='Unknown'. Returns rows classified."""
     handler = _build_langfuse_handler()
     classifier = UrgencyClassifier(langfuse_handler=handler)
-    writer = SnowflakeWriter(batch_size=write_batch_size)
-    conn = writer.connect()
-
-    sql = """
-        SELECT
-            service_request_id, requested_datetime, service_name, service_code,
-            status, address, lat, lon, city, raw_payload
-        FROM CIVIC_311.RAW.SERVICE_REQUESTS
-        WHERE urgency_label = 'Unknown'
-        ORDER BY requested_datetime
-    """
-    if limit is not None:
-        sql += f"\n        LIMIT {int(limit)}"
-
-    cur = conn.cursor(DictCursor)
-    cur.execute(sql)
-    rows = cur.fetchall()
-    cur.close()
+    writer = build_writer(batch_size=write_batch_size)
+    rows = writer.fetch_unclassified(limit=limit, sample_seed=sample_seed)
 
     total = len(rows)
-    log.info("classify_existing_starting", total=total, limit=limit)
+    log.info("classify_existing_starting", total=total, limit=limit, sample_seed=sample_seed)
     if total == 0:
         writer.close()
         return 0
@@ -111,14 +70,13 @@ def classify_existing(
     started = time.monotonic()
     classified_count = 0
 
-    for i, row in enumerate(rows, start=1):
+    for i, req in enumerate(rows, start=1):
         try:
-            req = _row_to_service_request(row)
             enriched = classifier.classify(req)
         except Exception as exc:
             log.error(
                 "classify_failed",
-                service_request_id=row.get("SERVICE_REQUEST_ID"),
+                service_request_id=req.service_request_id,
                 error=str(exc),
             )
             continue
@@ -169,7 +127,7 @@ def classify_existing(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Classify Snowflake rows where urgency_label='Unknown'."
+        description="Classify warehouse rows where urgency_label='Unknown'."
     )
     parser.add_argument(
         "--limit",
@@ -181,7 +139,13 @@ def _parse_args() -> argparse.Namespace:
         "--write-batch-size",
         type=int,
         default=50,
-        help="Rows per Snowflake MERGE statement (default: 50).",
+        help="Rows per MERGE statement (default: 50).",
+    )
+    parser.add_argument(
+        "--sample-seed",
+        type=int,
+        default=None,
+        help="Pick rows in a seeded pseudo-random order instead of oldest-first.",
     )
     parser.add_argument(
         "--progress-every",
@@ -198,6 +162,7 @@ def main() -> None:
         limit=args.limit,
         write_batch_size=args.write_batch_size,
         progress_every=args.progress_every,
+        sample_seed=args.sample_seed,
     )
 
 
