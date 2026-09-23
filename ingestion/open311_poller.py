@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import time
-from collections import deque
+from collections import Counter, deque
 from datetime import datetime
 from typing import Iterator, Optional
 
@@ -15,13 +15,38 @@ import structlog
 from dotenv import load_dotenv
 
 from ingestion.kafka_producer import CivicRequestProducer
-from ingestion.schemas import ServiceRequest
+from ingestion.schemas import ServiceRequest, schema_drift
 
 load_dotenv()
 
 log = structlog.get_logger(__name__)
 
 _SEEN_CAP = 10_000
+
+
+class _DriftTally:
+    """Aggregate schema drift across one fetch so a feed-wide change logs once, not per record."""
+
+    def __init__(self) -> None:
+        self.records = 0
+        self.missing: Counter[str] = Counter()
+        self.unexpected: Counter[str] = Counter()
+
+    def observe(self, record: dict) -> None:
+        missing, unexpected = schema_drift(record)
+        self.records += 1
+        self.missing.update(missing)
+        self.unexpected.update(unexpected)
+
+    def report(self, **context) -> None:
+        if self.missing or self.unexpected:
+            log.warning(
+                "open311_schema_drift",
+                records=self.records,
+                missing_keys=dict(self.missing),
+                unexpected_keys=dict(self.unexpected),
+                **context,
+            )
 
 
 class Open311Poller:
@@ -93,7 +118,12 @@ class Open311Poller:
                 log.error("open311_unexpected_payload", service_code=code, payload_type=type(records).__name__)
                 continue
 
+            drift = _DriftTally()
             for record in records:
+                if not isinstance(record, dict):
+                    log.error("open311_record_not_object", service_code=code, record=repr(record)[:200])
+                    continue
+                drift.observe(record)
                 request_id = str(record.get("service_request_id", "")).strip()
                 if not request_id:
                     log.warning("open311_record_missing_id", record=record)
@@ -111,6 +141,7 @@ class Open311Poller:
                     continue
                 self._mark_seen(request_id)
                 new_requests.append(parsed)
+            drift.report(service_code=code)
 
         return new_requests
 
@@ -170,15 +201,23 @@ class Open311Poller:
                 if not isinstance(records, list) or not records:
                     break
 
+                drift = _DriftTally()
                 for record in records:
+                    if not isinstance(record, dict):
+                        log.error("backfill_record_not_object", service_code=code, page=page)
+                        continue
+                    drift.observe(record)
                     try:
-                        yield ServiceRequest.from_api_response(record)
+                        parsed = ServiceRequest.from_api_response(record)
                     except Exception as exc:
                         log.error(
                             "backfill_record_parse_error",
                             service_request_id=record.get("service_request_id"),
                             error=str(exc),
                         )
+                        continue
+                    yield parsed
+                drift.report(service_code=code, page=page)
 
                 if len(records) < page_size:
                     break

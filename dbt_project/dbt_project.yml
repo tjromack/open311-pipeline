@@ -37,3 +37,8 @@ vars:
     High: 24
     Medium: 72
     Low: 168
+
+  # Schema-drift tripwire (tests/assert_closed_requests_have_close_time.sql):
+  # fail the build if more than this fraction of closed requests lack a
+  # parseable raw_payload.updated_datetime.
+  max_unparseable_close_time_pct: 0.01

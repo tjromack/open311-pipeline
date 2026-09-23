@@ -7,6 +7,27 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+# Keys Chicago's Open311 feed sent on every record in a 2026-09-23 survey of
+# 7,493 closed requests (7 days, all 125 service codes). A record missing any
+# of these, or carrying a key outside this set and the spec's optional fields,
+# is schema drift: the poller logs it rather than guessing.
+OPEN311_EXPECTED_KEYS = frozenset({
+    "service_request_id", "status", "service_name", "service_code",
+    "requested_datetime", "updated_datetime", "address", "lat", "long", "token",
+})
+# Optional in the Open311 GeoReport v2 spec, so their appearance is not drift
+# (media_url appeared on 1 of the 7,493 surveyed records).
+OPEN311_OPTIONAL_KEYS = frozenset({
+    "description", "status_notes", "agency_responsible", "service_notice",
+    "expected_datetime", "zipcode", "address_id", "media_url",
+})
+
+
+def schema_drift(record: dict[str, Any]) -> tuple[set[str], set[str]]:
+    """Return (missing_expected_keys, unexpected_keys) for one Open311 record."""
+    keys = set(record)
+    return set(OPEN311_EXPECTED_KEYS - keys), keys - OPEN311_EXPECTED_KEYS - OPEN311_OPTIONAL_KEYS
+
 
 class ServiceRequest(BaseModel):
     """A single Chicago Open311 service request, as published to Kafka."""
