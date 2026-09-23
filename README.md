@@ -78,8 +78,9 @@ Where the model's urgency and the city's close times disagree:
 | **Rodent Baiting / Rat Complaint** | **High** | **4** | **0%** | **2.73** |
 
 > Rodent baiting is classified High (24 h threshold) but averages 2.7 days to close. The first run, in
-> May 2026 on Snowflake, showed the same gap (12%, 3.3 days) on a different week of data. At n=4 that is a
-> lead worth checking, not a finding.
+> May 2026 on Snowflake, showed the same gap (12%, 3.3 days) on a different week of data. Two caveats: n=4,
+> and in the blind hand-label check the human labelled both rodent rows **Medium** (72 h), against which 2.7
+> days is borderline. The "gap" depends on a label a human disagreed with, so it is a lead, not a finding.
 
 **Earlier Snowflake run (May 2026).** The Snowflake path was verified live on 2026-05-27: 7,200 rows
 backfilled, 300 classified, 0 duplicates across two backfills, and 20/20 dbt tests passing (screenshot below).
@@ -120,7 +121,15 @@ against the real fixture), and `dbt parse` against the Snowflake target.
 **Classifier agreement with blind hand-labels.** 50 of the 300 were drawn at random with a fixed seed and
 labelled without seeing the model's answer, using only the fields the model sees and the prompt's own tier
 definitions ([`eval/LABELING_GUIDE.md`](eval/LABELING_GUIDE.md)).
-Results: **[TKTK: pending hand-labels, `make score-labels` → [`eval/RESULTS.md`](eval/RESULTS.md)]**
+The labeller used only `service_name` (not the address) and went on first reaction.
+
+| Exact agreement | Within one tier | Cohen's κ | Quadratic-weighted κ | Model less / more urgent |
+|---:|---:|---:|---:|---:|
+| 54% (39% excluding graffiti) | 98% | 0.32 | 0.64 | 15 / 8 |
+
+Most disagreements are one tier apart at the Low/Medium line, where the v1 rubric's examples overlap. Full
+confusion matrix, all 23 disagreements with the model's reasoning, and the error analysis:
+[`eval/RESULTS.md`](eval/RESULTS.md).
 
 ### What happens when Chicago changes the payload
 
@@ -174,8 +183,9 @@ When classification drifts, what to look at:
 - **The model sees very little.** Chicago's feed has no free-text description, so urgency is inferred from
   category, status and street address alone. The same category mostly gets the same tier, so this is closer
   to category triage than to reading a complaint.
-- **Agreement is one labeller's judgement** on 50 items, not ground truth, and a random 50 does not cover
-  every tier equally.
+- **Agreement is one labeller's quick judgement** on 50 items, not ground truth. It was labelled from
+  `service_name` alone and has no re-label consistency check, and the random 50 include no row the model
+  called Critical, so Critical precision is unmeasured.
 - **Not production-scale.** One consumer process classifies sequentially (~0.8 requests/s), with no
   load testing, autoscaling or exactly-once guarantees beyond idempotent `MERGE`. `department` is mostly NULL
   (Open311 puts `group` on the services catalog, not on requests).

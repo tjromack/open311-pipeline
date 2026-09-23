@@ -93,7 +93,9 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] G1: pin `cryptography` / `pyOpenSSL` so a fresh clone collects tests; state Python 3.12
 - [x] G1/G6: local DuckDB mode + zero-credential replay demo (`make demo-local`, CI runs the no-Kafka variant)
 - [x] G6: verify `make demo-local` through Kafka with Docker running (300 published, 300 consumed, 0 DLQ, dbt 25/25; re-run clean)
-- [ ] G4: hand-label the 50-row blind sheet (`eval/labels/label_sheet.csv`), run `make score-labels`, write the error analysis in `eval/RESULTS.md`, fill the README `[TKTK]`
+- [x] G4: hand-label the 50-row blind sheet, score (54% exact, κ 0.32, QWK 0.64), error analysis in `eval/RESULTS.md`, README filled
+- [ ] v2 prompt: sharpen the Low/Medium boundary, re-score against the same 50 labels
+- [ ] Re-label the same 50 a week later (self-agreement), or get a second labeller
 - [x] G3: schema-drift tests + dbt tripwire; README documents what fails loudly and what doesn't
 - [x] G5/G8: limits section and demonstrates line
 - [ ] Record a demo GIF of `make demo-local` for the README / portfolio card

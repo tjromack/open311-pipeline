@@ -1,0 +1,869 @@
+{
+  "n": 50,
+  "prompt_version": "v1",
+  "exact_agreement": 0.54,
+  "within_one_tier": 0.98,
+  "cohens_kappa": 0.3227326266195524,
+  "quadratic_weighted_kappa": 0.644808743169399,
+  "model_more_urgent": 8,
+  "model_less_urgent": 15,
+  "confusion": {
+    "Low": {
+      "Low": 15,
+      "Medium": 2,
+      "High": 0,
+      "Critical": 0
+    },
+    "Medium": {
+      "Low": 8,
+      "Medium": 6,
+      "High": 6,
+      "Critical": 0
+    },
+    "High": {
+      "Low": 1,
+      "Medium": 4,
+      "High": 6,
+      "Critical": 0
+    },
+    "Critical": {
+      "Low": 0,
+      "Medium": 0,
+      "High": 2,
+      "Critical": 0
+    }
+  },
+  "per_tier": {
+    "Low": {
+      "human_count": 17,
+      "model_count": 24,
+      "precision": 0.625,
+      "recall": 0.8823529411764706
+    },
+    "Medium": {
+      "human_count": 20,
+      "model_count": 12,
+      "precision": 0.5,
+      "recall": 0.3
+    },
+    "High": {
+      "human_count": 11,
+      "model_count": 14,
+      "precision": 0.42857142857142855,
+      "recall": 0.5454545454545454
+    },
+    "Critical": {
+      "human_count": 2,
+      "model_count": 0,
+      "precision": null,
+      "recall": 0.0
+    }
+  },
+  "disagreements": [
+    {
+      "item": 4,
+      "service_request_id": "SR26-01920473",
+      "service_name": "Traffic Signal Out Complaint",
+      "address": "1800 W 87 Th St",
+      "human": "Critical",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "A non-functioning traffic signal at a street intersection creates significant collision and injury risk, particularly during peak traffic hours, though the specific intersection volume and time of day are not provided.",
+      "notes": ""
+    },
+    {
+      "item": 5,
+      "service_request_id": "SR26-01907105",
+      "service_name": "Fly Dumping Complaint",
+      "address": "11531 S Hale Ave",
+      "human": "Low",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Illegal dumping degrades neighborhood quality and may pose environmental/health risks, but does not pose imminent threat to life or critical infrastructure requiring emergency response.",
+      "notes": ""
+    },
+    {
+      "item": 6,
+      "service_request_id": "SR26-01923830",
+      "service_name": "Graffiti Removal Request",
+      "address": "4801 W Chicago Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 7,
+      "service_request_id": "SR26-01929600",
+      "service_name": "Street Light Pole Damage Complaint",
+      "address": "416 N Sacramento Ave",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Damaged street light pole poses a potential safety hazard and may eventually fail, but does not present imminent risk to life or critical infrastructure if the pole itself remains structurally sound.",
+      "notes": ""
+    },
+    {
+      "item": 12,
+      "service_request_id": "SR26-01902809",
+      "service_name": "Sanitation Code Violation",
+      "address": "8135 S Calumet Ave",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "Sanitation code violations typically pose health and quality-of-life risks but do not present imminent danger; resolution within 24\u201348 hours is appropriate unless the violation involves food establishments or pest infestation.",
+      "notes": ""
+    },
+    {
+      "item": 13,
+      "service_request_id": "SR26-01931809",
+      "service_name": "Relocated Vehicle",
+      "address": "3722 W 32 Nd St",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "A relocated vehicle is a resolved administrative action with no ongoing safety or property risk.",
+      "notes": ""
+    },
+    {
+      "item": 14,
+      "service_request_id": "SR26-01939687",
+      "service_name": "Inspect Public Way Request",
+      "address": "2225 S Wabash Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.65,
+      "model_reasoning": "A generic public way inspection request with no specific hazard identified poses minimal immediate risk and is routine maintenance work.",
+      "notes": ""
+    },
+    {
+      "item": 17,
+      "service_request_id": "SR26-01893126",
+      "service_name": "Equipment Noise Complaint",
+      "address": "1668 W Ogden Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "Equipment noise complaint is a quality-of-life issue with no immediate safety risk or property damage potential.",
+      "notes": ""
+    },
+    {
+      "item": 18,
+      "service_request_id": "SR26-01890944",
+      "service_name": "Inspect Public Way Request",
+      "address": "5316 S Drexel Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.65,
+      "model_reasoning": "A generic public way inspection request with no specific hazard identified poses minimal immediate risk and is routine maintenance work.",
+      "notes": ""
+    },
+    {
+      "item": 19,
+      "service_request_id": "SR26-01915708",
+      "service_name": "Fly Dumping Complaint",
+      "address": "1906 W 19 Th St",
+      "human": "Low",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Illegal dumping degrades neighborhood quality and may pose environmental/health risks, but does not pose imminent threat to life or critical infrastructure requiring emergency response.",
+      "notes": ""
+    },
+    {
+      "item": 20,
+      "service_request_id": "SR26-01904468",
+      "service_name": "Rodent Baiting/Rat Complaint",
+      "address": "1528 N Cleveland Ave",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Rodent infestation poses a direct health and safety risk through disease transmission and contamination, requiring prompt intervention within 24 hours to prevent escalation.",
+      "notes": ""
+    },
+    {
+      "item": 24,
+      "service_request_id": "SR26-01916372",
+      "service_name": "Sign Repair Request - Stop Sign",
+      "address": "8247 S Crandon Ave",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "A damaged or illegible stop sign creates a traffic safety hazard that could lead to collisions or injuries if not repaired, but the risk is not imminent if the sign is still partially visible or the intersection has other traffic controls.",
+      "notes": ""
+    },
+    {
+      "item": 26,
+      "service_request_id": "SR26-01900998",
+      "service_name": "Abandoned Vehicle Complaint",
+      "address": "5954 S Mozart St",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Abandoned vehicles block traffic flow and parking, creating safety hazards and meaningful disruption to neighborhood access within 24 hours if not removed.",
+      "notes": ""
+    },
+    {
+      "item": 29,
+      "service_request_id": "SR26-01933077",
+      "service_name": "Bee/Wasp Removal",
+      "address": "6925 W Foster Ave",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.78,
+      "model_reasoning": "Bee or wasp nests pose a risk of serious allergic reactions or stings that could cause injury, particularly if the infestation is near a residential property where occupants or visitors may be exposed.",
+      "notes": ""
+    },
+    {
+      "item": 33,
+      "service_request_id": "SR26-01896798",
+      "service_name": "Check for Leak",
+      "address": "10434 S Avenue  F",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.72,
+      "model_reasoning": "A water or gas leak at a residential address poses risk of property damage, utility loss, or potential safety hazard if not promptly investigated and repaired.",
+      "notes": ""
+    },
+    {
+      "item": 34,
+      "service_request_id": "SR26-01907866",
+      "service_name": "Tree Debris Clean-Up Request",
+      "address": "3318 W Cuyler Ave",
+      "human": "High",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Tree debris cleanup is a routine maintenance task with no immediate safety risk or property damage threat.",
+      "notes": ""
+    },
+    {
+      "item": 35,
+      "service_request_id": "SR26-01893684",
+      "service_name": "Sewer Cleaning Inspection Request",
+      "address": "10936 S Normal Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "A routine sewer cleaning inspection request poses no immediate safety or infrastructure risk and is standard preventive maintenance.",
+      "notes": ""
+    },
+    {
+      "item": 39,
+      "service_request_id": "SR26-01916624",
+      "service_name": "Bulk Pickup",
+      "address": "6336 N Kilpatrick Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Bulk pickup is a routine sanitation service with no immediate safety, health, or infrastructure risk.",
+      "notes": ""
+    },
+    {
+      "item": 40,
+      "service_request_id": "SR26-01890655",
+      "service_name": "Missing Lid/Grate/Cover",
+      "address": "1841 W 23 Rd St",
+      "human": "Critical",
+      "model": "High",
+      "model_score": 0.75,
+      "model_reasoning": "Missing lid/grate/cover on a street utility access point creates a trip/fall hazard and potential injury risk to pedestrians or vehicles, requiring prompt repair to prevent accidents.",
+      "notes": ""
+    },
+    {
+      "item": 41,
+      "service_request_id": "SR26-01909779",
+      "service_name": "Equipment Noise Complaint",
+      "address": "7736 S Phillips Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "Equipment noise complaints are typically quality-of-life issues without immediate safety risk, though context-dependent factors like time of day or duration could elevate severity.",
+      "notes": ""
+    },
+    {
+      "item": 42,
+      "service_request_id": "SR26-01896514",
+      "service_name": "Sanitation Code Violation",
+      "address": "6710 S May St",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "Sanitation code violations typically degrade neighborhood conditions and may pose health risks, but without specifics on severity (e.g., rodent infestation vs. minor litter), they generally warrant medium-priority response within 24\u201348 hours rather than immediate intervention.",
+      "notes": ""
+    },
+    {
+      "item": 48,
+      "service_request_id": "SR26-01922738",
+      "service_name": "Rodent Baiting/Rat Complaint",
+      "address": "3000 S Princeton Ave",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Rodent infestation poses a direct health and safety risk through disease transmission and contamination, requiring prompt intervention within 24 hours to prevent escalation and property damage.",
+      "notes": ""
+    },
+    {
+      "item": 49,
+      "service_request_id": "SR26-01900993",
+      "service_name": "Sign Repair Request - Stop Sign",
+      "address": "2159 S Lumber St",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.75,
+      "model_reasoning": "A damaged or missing stop sign creates a direct traffic safety hazard that could lead to vehicle collisions and injuries within hours if not repaired.",
+      "notes": ""
+    }
+  ],
+  "rows": [
+    {
+      "item": 1,
+      "service_request_id": "SR26-01917139",
+      "service_name": "Tree Emergency",
+      "address": "1029 N Long Ave",
+      "human": "High",
+      "model": "High",
+      "model_score": 0.75,
+      "model_reasoning": "A tree emergency at a residential address poses risk of falling branches or limbs causing injury or property damage if not addressed promptly.",
+      "notes": ""
+    },
+    {
+      "item": 2,
+      "service_request_id": "SR26-01907412",
+      "service_name": "Dead Animal Pick-Up Request",
+      "address": "2600 W Belmont Ave",
+      "human": "Medium",
+      "model": "Medium",
+      "model_score": 0.78,
+      "model_reasoning": "Dead animal removal poses a public health and sanitation concern that degrades neighborhood quality of life and may attract pests or disease vectors if not addressed within a day or two, but does not pose imminent safety risk.",
+      "notes": ""
+    },
+    {
+      "item": 3,
+      "service_request_id": "SR26-01911971",
+      "service_name": "Dead Animal Pick-Up Request",
+      "address": "6289 N Caldwell Ave",
+      "human": "Medium",
+      "model": "Medium",
+      "model_score": 0.78,
+      "model_reasoning": "Dead animal removal poses a public health and sanitation concern that degrades neighborhood conditions and may attract pests or disease vectors if not addressed within a day or two, but does not pose imminent safety risk.",
+      "notes": ""
+    },
+    {
+      "item": 4,
+      "service_request_id": "SR26-01920473",
+      "service_name": "Traffic Signal Out Complaint",
+      "address": "1800 W 87 Th St",
+      "human": "Critical",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "A non-functioning traffic signal at a street intersection creates significant collision and injury risk, particularly during peak traffic hours, though the specific intersection volume and time of day are not provided.",
+      "notes": ""
+    },
+    {
+      "item": 5,
+      "service_request_id": "SR26-01907105",
+      "service_name": "Fly Dumping Complaint",
+      "address": "11531 S Hale Ave",
+      "human": "Low",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Illegal dumping degrades neighborhood quality and may pose environmental/health risks, but does not pose imminent threat to life or critical infrastructure requiring emergency response.",
+      "notes": ""
+    },
+    {
+      "item": 6,
+      "service_request_id": "SR26-01923830",
+      "service_name": "Graffiti Removal Request",
+      "address": "4801 W Chicago Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 7,
+      "service_request_id": "SR26-01929600",
+      "service_name": "Street Light Pole Damage Complaint",
+      "address": "416 N Sacramento Ave",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Damaged street light pole poses a potential safety hazard and may eventually fail, but does not present imminent risk to life or critical infrastructure if the pole itself remains structurally sound.",
+      "notes": ""
+    },
+    {
+      "item": 8,
+      "service_request_id": "SR26-01902697",
+      "service_name": "Shelter Request",
+      "address": "10 S Kedzie Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.65,
+      "model_reasoning": "Shelter requests are informational or referral services with no immediate safety or property risk, though individual circumstances may vary.",
+      "notes": ""
+    },
+    {
+      "item": 9,
+      "service_request_id": "SR26-01888649",
+      "service_name": "Bee/Wasp Removal",
+      "address": "1901 N Oakley Ave",
+      "human": "Medium",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Bee/wasp nests pose a meaningful risk of stings and allergic reactions to residents and visitors, degrading neighborhood safety and usability, but do not present imminent life-threatening danger unless the requester reports active aggression or severe allergies.",
+      "notes": ""
+    },
+    {
+      "item": 10,
+      "service_request_id": "SR26-01888818",
+      "service_name": "Graffiti Removal Request",
+      "address": "822 W Adams St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti on a street address is a cosmetic quality-of-life issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 11,
+      "service_request_id": "SR26-01931868",
+      "service_name": "Open Fire Hydrant Complaint",
+      "address": "3824 S Michigan Ave",
+      "human": "High",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "An open fire hydrant wastes significant water, creates street flooding/hazards, and reduces water pressure available for firefighting in an emergency.",
+      "notes": ""
+    },
+    {
+      "item": 12,
+      "service_request_id": "SR26-01902809",
+      "service_name": "Sanitation Code Violation",
+      "address": "8135 S Calumet Ave",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "Sanitation code violations typically pose health and quality-of-life risks but do not present imminent danger; resolution within 24\u201348 hours is appropriate unless the violation involves food establishments or pest infestation.",
+      "notes": ""
+    },
+    {
+      "item": 13,
+      "service_request_id": "SR26-01931809",
+      "service_name": "Relocated Vehicle",
+      "address": "3722 W 32 Nd St",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "A relocated vehicle is a resolved administrative action with no ongoing safety or property risk.",
+      "notes": ""
+    },
+    {
+      "item": 14,
+      "service_request_id": "SR26-01939687",
+      "service_name": "Inspect Public Way Request",
+      "address": "2225 S Wabash Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.65,
+      "model_reasoning": "A generic public way inspection request with no specific hazard identified poses minimal immediate risk and is routine maintenance work.",
+      "notes": ""
+    },
+    {
+      "item": 15,
+      "service_request_id": "SR26-01890572",
+      "service_name": "Abandoned Vehicle Complaint",
+      "address": "5016 W Iowa St",
+      "human": "High",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Abandoned vehicles block traffic flow and parking, creating safety hazards and meaningful disruption to neighborhood access within 24 hours if not removed.",
+      "notes": ""
+    },
+    {
+      "item": 16,
+      "service_request_id": "SR26-01928976",
+      "service_name": "Graffiti Removal Request",
+      "address": "1375 W Cortland St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 17,
+      "service_request_id": "SR26-01893126",
+      "service_name": "Equipment Noise Complaint",
+      "address": "1668 W Ogden Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "Equipment noise complaint is a quality-of-life issue with no immediate safety risk or property damage potential.",
+      "notes": ""
+    },
+    {
+      "item": 18,
+      "service_request_id": "SR26-01890944",
+      "service_name": "Inspect Public Way Request",
+      "address": "5316 S Drexel Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.65,
+      "model_reasoning": "A generic public way inspection request with no specific hazard identified poses minimal immediate risk and is routine maintenance work.",
+      "notes": ""
+    },
+    {
+      "item": 19,
+      "service_request_id": "SR26-01915708",
+      "service_name": "Fly Dumping Complaint",
+      "address": "1906 W 19 Th St",
+      "human": "Low",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Illegal dumping degrades neighborhood quality and may pose environmental/health risks, but does not pose imminent threat to life or critical infrastructure requiring emergency response.",
+      "notes": ""
+    },
+    {
+      "item": 20,
+      "service_request_id": "SR26-01904468",
+      "service_name": "Rodent Baiting/Rat Complaint",
+      "address": "1528 N Cleveland Ave",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Rodent infestation poses a direct health and safety risk through disease transmission and contamination, requiring prompt intervention within 24 hours to prevent escalation.",
+      "notes": ""
+    },
+    {
+      "item": 21,
+      "service_request_id": "SR26-01888805",
+      "service_name": "CHA Miscellaneous",
+      "address": "838 N Noble St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.65,
+      "model_reasoning": "CHA Miscellaneous is a catch-all category with no specific hazard identified, and the closed status indicates it has already been resolved or is not currently actionable.",
+      "notes": ""
+    },
+    {
+      "item": 22,
+      "service_request_id": "SR26-01938352",
+      "service_name": "Graffiti Removal Request",
+      "address": "2001 N Milwaukee Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 23,
+      "service_request_id": "SR26-01920330",
+      "service_name": "Graffiti Removal Request",
+      "address": "3158 W Berteau Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 24,
+      "service_request_id": "SR26-01916372",
+      "service_name": "Sign Repair Request - Stop Sign",
+      "address": "8247 S Crandon Ave",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "A damaged or illegible stop sign creates a traffic safety hazard that could lead to collisions or injuries if not repaired, but the risk is not imminent if the sign is still partially visible or the intersection has other traffic controls.",
+      "notes": ""
+    },
+    {
+      "item": 25,
+      "service_request_id": "SR26-01886974",
+      "service_name": "Low Water Pressure Complaint",
+      "address": "3927 W 60 Th Pl",
+      "human": "Medium",
+      "model": "Medium",
+      "model_score": 0.75,
+      "model_reasoning": "Low water pressure degrades essential household function and quality of life but does not pose immediate safety risk unless accompanied by contamination or complete outage.",
+      "notes": ""
+    },
+    {
+      "item": 26,
+      "service_request_id": "SR26-01900998",
+      "service_name": "Abandoned Vehicle Complaint",
+      "address": "5954 S Mozart St",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Abandoned vehicles block traffic flow and parking, creating safety hazards and meaningful disruption to neighborhood access within 24 hours if not removed.",
+      "notes": ""
+    },
+    {
+      "item": 27,
+      "service_request_id": "SR26-01938222",
+      "service_name": "Graffiti Removal Request",
+      "address": "10 S Leavitt St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 28,
+      "service_request_id": "SR26-01921682",
+      "service_name": "Graffiti Removal Request",
+      "address": "2354 W Superior St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti on a residential property is a cosmetic issue with no immediate safety or structural risk.",
+      "notes": ""
+    },
+    {
+      "item": 29,
+      "service_request_id": "SR26-01933077",
+      "service_name": "Bee/Wasp Removal",
+      "address": "6925 W Foster Ave",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.78,
+      "model_reasoning": "Bee or wasp nests pose a risk of serious allergic reactions or stings that could cause injury, particularly if the infestation is near a residential property where occupants or visitors may be exposed.",
+      "notes": ""
+    },
+    {
+      "item": 30,
+      "service_request_id": "SR26-01915942",
+      "service_name": "Graffiti Removal Request",
+      "address": "3236 N Lincoln Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti on a residential property is a cosmetic quality-of-life issue with no immediate safety or infrastructure risk.",
+      "notes": ""
+    },
+    {
+      "item": 31,
+      "service_request_id": "SR26-01938666",
+      "service_name": "Graffiti Removal Request",
+      "address": "2550 W Armitage Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 32,
+      "service_request_id": "SR26-01922857",
+      "service_name": "Tree Emergency",
+      "address": "6137 S Parkside Ave",
+      "human": "High",
+      "model": "High",
+      "model_score": 0.75,
+      "model_reasoning": "A tree emergency at a residential address poses risk of falling branches or limbs causing injury or property damage if not addressed promptly.",
+      "notes": ""
+    },
+    {
+      "item": 33,
+      "service_request_id": "SR26-01896798",
+      "service_name": "Check for Leak",
+      "address": "10434 S Avenue  F",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.72,
+      "model_reasoning": "A water or gas leak at a residential address poses risk of property damage, utility loss, or potential safety hazard if not promptly investigated and repaired.",
+      "notes": ""
+    },
+    {
+      "item": 34,
+      "service_request_id": "SR26-01907866",
+      "service_name": "Tree Debris Clean-Up Request",
+      "address": "3318 W Cuyler Ave",
+      "human": "High",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Tree debris cleanup is a routine maintenance task with no immediate safety risk or property damage threat.",
+      "notes": ""
+    },
+    {
+      "item": 35,
+      "service_request_id": "SR26-01893684",
+      "service_name": "Sewer Cleaning Inspection Request",
+      "address": "10936 S Normal Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "A routine sewer cleaning inspection request poses no immediate safety or infrastructure risk and is standard preventive maintenance.",
+      "notes": ""
+    },
+    {
+      "item": 36,
+      "service_request_id": "SR26-01913620",
+      "service_name": "Graffiti Removal Request",
+      "address": "1834 N Clybourn Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti on a residential/commercial property is a cosmetic quality-of-life issue with no immediate safety or infrastructure risk.",
+      "notes": ""
+    },
+    {
+      "item": 37,
+      "service_request_id": "SR26-01931260",
+      "service_name": "Report an Injured Animal",
+      "address": "5044 N Lockwood Ave",
+      "human": "High",
+      "model": "High",
+      "model_score": 0.78,
+      "model_reasoning": "An injured animal poses immediate risk of suffering and potential public safety hazard if the animal is aggressive or poses disease transmission risk, requiring prompt animal control response within hours.",
+      "notes": ""
+    },
+    {
+      "item": 38,
+      "service_request_id": "SR26-01931281",
+      "service_name": "Report an Injured Animal",
+      "address": "1471 W 114 Th Pl",
+      "human": "High",
+      "model": "High",
+      "model_score": 0.78,
+      "model_reasoning": "An injured animal poses potential safety risk to the public and requires prompt animal control intervention to prevent suffering and mitigate disease transmission or aggressive behavior.",
+      "notes": ""
+    },
+    {
+      "item": 39,
+      "service_request_id": "SR26-01916624",
+      "service_name": "Bulk Pickup",
+      "address": "6336 N Kilpatrick Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Bulk pickup is a routine sanitation service with no immediate safety, health, or infrastructure risk.",
+      "notes": ""
+    },
+    {
+      "item": 40,
+      "service_request_id": "SR26-01890655",
+      "service_name": "Missing Lid/Grate/Cover",
+      "address": "1841 W 23 Rd St",
+      "human": "Critical",
+      "model": "High",
+      "model_score": 0.75,
+      "model_reasoning": "Missing lid/grate/cover on a street utility access point creates a trip/fall hazard and potential injury risk to pedestrians or vehicles, requiring prompt repair to prevent accidents.",
+      "notes": ""
+    },
+    {
+      "item": 41,
+      "service_request_id": "SR26-01909779",
+      "service_name": "Equipment Noise Complaint",
+      "address": "7736 S Phillips Ave",
+      "human": "Medium",
+      "model": "Low",
+      "model_score": 0.75,
+      "model_reasoning": "Equipment noise complaints are typically quality-of-life issues without immediate safety risk, though context-dependent factors like time of day or duration could elevate severity.",
+      "notes": ""
+    },
+    {
+      "item": 42,
+      "service_request_id": "SR26-01896514",
+      "service_name": "Sanitation Code Violation",
+      "address": "6710 S May St",
+      "human": "High",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "Sanitation code violations typically degrade neighborhood conditions and may pose health risks, but without specifics on severity (e.g., rodent infestation vs. minor litter), they generally warrant medium-priority response within 24\u201348 hours rather than immediate intervention.",
+      "notes": ""
+    },
+    {
+      "item": 43,
+      "service_request_id": "SR26-01899349",
+      "service_name": "Graffiti Removal Request",
+      "address": "20 W Madison St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti on a public street is a cosmetic quality-of-life issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 44,
+      "service_request_id": "SR26-01926595",
+      "service_name": "Graffiti Removal Request",
+      "address": "2205 W Belmont Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    },
+    {
+      "item": 45,
+      "service_request_id": "SR26-01931333",
+      "service_name": "Stray Animal Complaint",
+      "address": "2930 W Fletcher St",
+      "human": "Medium",
+      "model": "Medium",
+      "model_score": 0.72,
+      "model_reasoning": "A stray animal poses potential safety and health risks to residents and property, but without evidence of aggression or immediate threat, it falls into quality-of-life degradation requiring timely but not emergency response.",
+      "notes": ""
+    },
+    {
+      "item": 46,
+      "service_request_id": "SR26-01926308",
+      "service_name": "Construction & Demolition Complaint",
+      "address": "3650 S Emerald Ave",
+      "human": "Medium",
+      "model": "Medium",
+      "model_score": 0.65,
+      "model_reasoning": "Construction and demolition complaints typically involve noise, dust, or traffic disruption that degrades neighborhood quality of life but pose no immediate safety risk unless specific hazards are mentioned.",
+      "notes": ""
+    },
+    {
+      "item": 47,
+      "service_request_id": "SR26-01891747",
+      "service_name": "Graffiti Removal Request",
+      "address": "6033 W 53 Rd St",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti on a residential street is a cosmetic quality-of-life issue with no immediate safety or property damage risk.</reasoning>\n</invoke>",
+      "notes": ""
+    },
+    {
+      "item": 48,
+      "service_request_id": "SR26-01922738",
+      "service_name": "Rodent Baiting/Rat Complaint",
+      "address": "3000 S Princeton Ave",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.85,
+      "model_reasoning": "Rodent infestation poses a direct health and safety risk through disease transmission and contamination, requiring prompt intervention within 24 hours to prevent escalation and property damage.",
+      "notes": ""
+    },
+    {
+      "item": 49,
+      "service_request_id": "SR26-01900993",
+      "service_name": "Sign Repair Request - Stop Sign",
+      "address": "2159 S Lumber St",
+      "human": "Medium",
+      "model": "High",
+      "model_score": 0.75,
+      "model_reasoning": "A damaged or missing stop sign creates a direct traffic safety hazard that could lead to vehicle collisions and injuries within hours if not repaired.",
+      "notes": ""
+    },
+    {
+      "item": 50,
+      "service_request_id": "SR26-01906774",
+      "service_name": "Graffiti Removal Request",
+      "address": "1319 N Bosworth Ave",
+      "human": "Low",
+      "model": "Low",
+      "model_score": 0.85,
+      "model_reasoning": "Graffiti removal is a cosmetic maintenance issue with no immediate safety or property damage risk.",
+      "notes": ""
+    }
+  ]
+}
