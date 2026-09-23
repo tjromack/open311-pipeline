@@ -64,53 +64,54 @@ Rows = human label, columns = model label.
 
 ## Error analysis
 
-_Draft from the 2026-09-23 scoring run. Every number below comes from
-`eval/results.json` or the table above._
+**How I labelled.** I labelled all 50 myself, blind to the model's labels,
+going on my first reaction to `service_name`. I didn't use the address
+column, even though the model saw it, and I didn't write notes. So this
+measures how far the model agrees with a quick category-level human call, not
+with a careful per-request review.
 
-**How the labels were made.** One labeller (the author), blind to the model's
-labels, going on a first reaction to `service_name`. The address column was
-not used, although the model saw it, and no notes were written. So this
-measures agreement with a quick category-level human judgement, not with a
-careful per-request review.
+**Agreement is modest, and graffiti flatters it.** We agree exactly 54% of the
+time (Cohen's kappa 0.32), and 98% of the time we're within one tier
+(quadratic-weighted kappa 0.64). Only one disagreement spans two tiers: I
+called #34 Tree Debris Clean-Up High, and the model called it Low. Graffiti
+Removal is 14 of the 50 rows and we agree on 13 of them. Without it, exact
+agreement drops to 14/36 (39%). I'd quote that number alongside the headline
+one.
 
-**Agreement is modest, and graffiti flatters it.** Exact agreement is 54%
-(kappa 0.32), and 98% are within one tier (quadratic-weighted kappa 0.64). Only
-one disagreement spans two tiers (#34 Tree Debris Clean-Up: human High, model
-Low). Graffiti Removal is 14 of the 50 rows and agrees on 13. Without it,
-exact agreement is 14/36 (39%).
-
-**The model rates lower than the human, mostly at the Low/Medium line.** It
-was less urgent 15 times and more urgent 8 times. The largest cell is 8 rows
-where the human said Medium and the model said Low: equipment noise (x2),
-inspect public way (x2), sewer cleaning inspection, bulk pickup, relocated
-vehicle, graffiti. The v1 rubric makes this boundary ambiguous: graffiti is an
-example under both Medium ("on private property") and Low ("mild ... in an
-alley"), and noise complaints are named under Medium.
+**The model rates lower than I do, mostly at the Low/Medium line.** It was
+less urgent than me 15 times and more urgent 8 times. The biggest single cell
+is 8 rows where I said Medium and it said Low: equipment noise (x2), inspect
+public way (x2), sewer cleaning inspection, bulk pickup, relocated vehicle,
+graffiti. Some of that is my prompt's fault. The v1 rubric lists graffiti as
+an example under both Medium ("on private property") and Low ("mild ... in an
+alley"), and puts noise complaints under Medium, so the boundary I asked the
+model to find isn't well defined.
 
 **Disagreements follow categories.** Categories that appear twice mostly get
-the same pair of labels both times: sanitation code violation (human High,
-model Medium x2), rodent baiting (human Medium, model High x2), fly dumping
-(human Low, model Medium x2). Stop-sign repair is split on both sides in
-opposite directions (#24 human High / model Medium, #49 human Medium / model
-High). The model runs at temperature 0, so its split can only come from the
-address.
+the same pair of labels both times: sanitation code violation (me High, model
+Medium x2), rodent baiting (me Medium, model High x2), fly dumping (me Low,
+model Medium x2). Stop-sign repair is the exception: we split in opposite
+directions (#24 me High / model Medium, #49 me Medium / model High). The model
+runs at temperature 0, so its split can only come from the address. Mine came
+from first reaction, which is a consistency problem on my side.
 
-**This affects a headline claim.** The README's sharpest SLA gap, rodent
-baiting at 0% compliance, rests on the model's High (24 h). The human
-labelled both rodent rows Medium (72 h). Against 72 h, the 2.7-day average
-close time is borderline rather than a clear miss.
+**This changed one of my headline claims.** The sharpest SLA gap in the
+README, rodent baiting at 0% compliance, rests on the model calling it High
+(24 h). I labelled both rodent rows Medium (72 h), and against 72 h the
+2.7-day average close time is borderline rather than a clear miss. I've
+downgraded it in the README from a finding to a lead.
 
-**Confidence says little.** Mean confidence is 0.80 when the labels agree and
-0.77 when they don't. Below 0.75, 6 of 10 rows disagree, against 23 of 50
-overall: a hint, too small to use as a gate.
+**Confidence doesn't help much.** Mean model confidence is 0.80 when we agree
+and 0.77 when we don't. Below 0.75, 6 of 10 rows disagree, against 23 of 50
+overall. That's a hint, but too small a sample to use as a review gate.
 
-**Not covered.** The random 50 contain no row the model labelled Critical,
-so this says nothing about Critical precision. The human labelled 2 rows
+**What this doesn't cover.** None of my random 50 is a row the model labelled
+Critical, so this says nothing about Critical precision. I labelled 2 rows
 Critical (a traffic signal out, a missing grate), and the model called both
 High.
 
-**What a v2 prompt would change.** Make the Low/Medium line explicit (does it
-recur, is it on public property, does it block use of the space), stop listing
-graffiti in two tiers, and say how to treat category-only requests with no
-description. Then re-score against the same 50 labels. The sheet is committed,
-so v1 and v2 can be compared directly.
+**What I'd change in a v2 prompt.** Make the Low/Medium line explicit (does
+it recur, is it on public property, does it block use of the space), stop
+listing graffiti in two tiers, and say how to treat category-only requests
+that have no description. Then re-score against these same 50 labels. The
+sheet is committed, so v1 and v2 compare directly.
