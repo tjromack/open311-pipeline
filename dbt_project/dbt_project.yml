@@ -1,5 +1,5 @@
 name: 'open311_pipeline'
-version: '1.0.0'
+version: '1.1.0'
 config-version: 2
 
 profile: 'open311_pipeline'

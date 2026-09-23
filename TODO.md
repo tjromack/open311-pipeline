@@ -1,8 +1,9 @@
 # TODO.md — Open311 Civic-Request Pipeline
 
-Phase 1 → 4 are complete and live-verified against real Snowflake + Langfuse.
-Phase 5 is mostly done; the remaining items are user-driven (screenshots,
-GitHub push, portfolio post).
+v1.1.0 (2026-09-23): phases 1–5 and the portfolio-audit remediation are done.
+The pipeline runs locally on DuckDB with no accounts, CI runs every dbt test on
+real data, and the classifier evaluation is published. Open items are at the
+bottom: the case study, a v2 prompt, and scale-out work.
 
 ---
 
@@ -84,9 +85,10 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] **Capture real screenshots** — `docs/langfuse-trace.png`, `docs/dbt-lineage.png`, `docs/snowflake-sla.png` captured, committed, and embedded in the README Demo section
 - [x] **Push to GitHub** — pushed to https://github.com/tjromack/open311-pipeline (`origin/main` up to date)
 - [x] **Set repo description + topics** — one-line pitch and 15 topics applied via `gh repo edit`
-- [ ] **Flip repo to public** — currently private; make public once final review passes (`gh repo edit --visibility public`)
+- [x] **Flip repo to public**
 - [x] **Tag `v1.0.0`** — tag pushed and GitHub release published at https://github.com/tjromack/open311-pipeline/releases/tag/v1.0.0 (release body from CHANGELOG; tag points at the v1.0.0 code state, commit `4670402`)
-- [ ] **Portfolio post** — share Langfuse trace screenshot + SLA compliance chart on LinkedIn/Twitter/personal site
+- [ ] **Portfolio case study** — /work write-up to the playbook template (situation, constraints, design + rejected alternative, verification, what broke, limits, what I'd do differently)
+- [ ] **Portfolio card** — featured, demonstrates line, tryIt, verifiedBy pills
 
 ### Portfolio audit remediation (2026-09-23, branch `portfolio/audit-remediation`)
 
@@ -98,11 +100,12 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [ ] Re-label the same 50 a week later (self-agreement), or get a second labeller
 - [x] G3: schema-drift tests + dbt tripwire; README documents what fails loudly and what doesn't
 - [x] G5/G8: limits section and demonstrates line
-- [ ] Record a demo GIF of `make demo-local` for the README / portfolio card
+- [x] Record a demo GIF of `make demo-local` (`docs/demo.gif`)
 
 ### Stretch / nice-to-have follow-ups (not blocking v1.0.0)
 
 - [ ] **Department mapping** — `dim_request_category.department` is mostly NULL because Open311's `group` field lives only on the services catalog, not on requests. Fix by seeding a `service_code → department` CSV, or pulling `services.json` during backfill and joining.
-- [ ] **Classify the remaining ~6,900 Unknown rows** — `make classify` with no `LIMIT` will work through them all (~4 hours sequential, ~$5 in Anthropic API). Or implement concurrent classification (`asyncio` + bounded semaphore around the LLM call) to do it in ~30 min.
+- [ ] **Classify the full backfill** — ~7,200 remaining Unknown rows at ~0.8 req/s is ~2.5 hours sequential and ~$13 (measured ~$0.0018/request). Concurrent classification (`asyncio` + bounded semaphore) or the Message Batches API (50% cost, asynchronous) would cut both.
 - [ ] **Loom recording** — 2-minute walkthrough of the live pipeline: events flowing → Langfuse traces → Snowflake rows → dbt SLA chart
 - [ ] **dbt source freshness** — declare `loaded_at_field: _inserted_at` on `civic_311.service_requests` so `dbt source freshness` warns when ingestion stalls
+- [ ] **Unbiased SLA cohort** — measure compliance on requests opened in a window and observed until closed, instead of the closed-only backfill

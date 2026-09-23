@@ -6,8 +6,11 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
-Portfolio-audit remediation: the repo now runs from a fresh clone with no
-accounts, and its verification evidence is published.
+## [1.1.0] — 2026-09-23
+
+The pipeline runs from a fresh clone with no accounts, every dbt test runs on
+real data in CI, schema drift fails the build, and the classifier's agreement
+with blind hand-labels is published.
 
 ### Added
 
@@ -27,8 +30,25 @@ accounts, and its verification evidence is published.
 - `scripts/sla_report.py`, `scripts/export_fixture.py`,
   `scripts/load_fixture.py`; `classify_existing --sample-seed`;
   `classifier.consumer --exit-when-idle`.
-- README: try-it path, published results, "How it's verified", payload-drift
-  behaviour, Langfuse drift signals, and a limits section.
+- **Evaluation results.** 50 blind hand-labels scored against the model:
+  54% exact agreement, 98% within one tier, Cohen's kappa 0.32,
+  quadratic-weighted kappa 0.64 (`eval/RESULTS.md`).
+- README: try-it path with a recorded demo (`docs/demo.gif`), results from the
+  2026-09-23 run, "How it's verified", payload-drift behaviour, Langfuse drift
+  signals, and a limits section. ARCHITECTURE.md covers both warehouse
+  backends, replay mode and drift handling.
+
+### Changed
+
+- Headline results come from a 2026-09-23 run (7,493 requests, 300
+  classified) reproducible from the committed fixture. The v1.0.0 Snowflake
+  run is kept as history; that trial account has expired.
+- Classification cost is measured, not estimated: ~1,290 input and ~100
+  output tokens per request, ~$1.80 per 1,000 at Haiku 4.5 pricing (the
+  previous "~$0.02 / 1000" figure was wrong).
+- The rodent-baiting SLA gap is reported as a lead: the hand-labels put that
+  category at Medium, not the model's High.
+- CI uses the Node 24 releases of `actions/checkout` and `actions/setup-python`.
 
 ### Fixed
 
