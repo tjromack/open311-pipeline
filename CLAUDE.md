@@ -5,7 +5,7 @@
 A production-pattern streaming pipeline that:
 1. **Ingests** live 311 service-request events from Chicago's Open311 API into a Kafka topic on a polling cadence
 2. **Classifies** each request's urgency (Critical / High / Medium / Low) via an LLM, with every inference traced in Langfuse
-3. **Warehouses** enriched, resolved-request records in Snowflake
+3. **Warehouses** enriched, resolved-request records in DuckDB (local default, no account) or Snowflake
 4. **Models** department SLA compliance by category using dbt, producing analytics-ready tables
 
 The pipeline is a reusable template for the pattern: **stream → classify → warehouse → model**.
@@ -20,8 +20,8 @@ The pipeline is a reusable template for the pattern: **stream → classify → w
 | Stream source | **Chicago Open311 REST API** | Well-documented, actively maintained, free, high-volume |
 | LLM classifier | **Anthropic Claude Haiku 4.5** (`claude-haiku-4-5-20251001`) via `langchain-anthropic` | Cost-effective; native tool-call / structured-output support; swappable |
 | LLM tracing | **Langfuse** (cloud or self-hosted) | Native LangChain integration; traces each classification call |
-| Data warehouse | **Snowflake** | Columnar, scales, dbt-native; fulfills portfolio gap |
-| Transformation | **dbt Core** | SQL-based SLA models, tests, docs |
+| Data warehouse | **DuckDB** (default) / **Snowflake** | DuckDB runs everything with no account (demo, CI); Snowflake is the production target. Same MERGE contract on both |
+| Transformation | **dbt Core** (`dbt-duckdb`, `dbt-snowflake`) | Shared SQL models via cross-db macros; tests; docs |
 | Orchestration | **Python 3.12** with `asyncio` + `schedule` | Lightweight; no Airflow overkill for Phase 1 |
 | Containerization | **Docker Compose** | Kafka + Zookeeper + optional local Langfuse |
 | Config/secrets | **python-dotenv** + `.env` file | Never hardcode credentials |
@@ -36,54 +36,50 @@ open311-pipeline/
 ├── docker-compose.yml          # Kafka, Zookeeper (+ optional Langfuse)
 ├── .env.example                # Template for all env vars
 ├── .env                        # Local secrets — NEVER commit
-├── requirements.txt
-├── README.md
-├── CLAUDE.md
-├── TODO.md
+├── requirements.txt            # Pinned; Python 3.12 (.python-version)
+├── Makefile                    # `make help` lists every target
+├── README.md / ARCHITECTURE.md / CHANGELOG.md / TODO.md / CLAUDE.md
 │
 ├── ingestion/
-│   ├── __init__.py
-│   ├── open311_poller.py        # Polls Chicago 311 API, publishes to Kafka
+│   ├── open311_poller.py       # Polls Chicago 311 API, drift check, publishes to Kafka
 │   ├── kafka_producer.py       # Wraps confluent-kafka Producer
-│   └── schemas.py              # Pydantic models: ServiceRequest, EnrichedRequest
+│   └── schemas.py              # ServiceRequest, EnrichedRequest, observed Open311 key set
 │
 ├── classifier/
-│   ├── __init__.py
-│   ├── consumer.py             # Kafka consumer loop
-│   ├── urgency_classifier.py   # LangChain chain + Langfuse tracing
-│   └── prompts.py              # Prompt templates (versioned)
+│   ├── consumer.py             # Kafka consumer loop, DLQ routing, --exit-when-idle
+│   ├── urgency_classifier.py   # LangChain chain + Langfuse tracing (CLASSIFIER_MODE=live)
+│   ├── replay_classifier.py    # Recorded labels from the fixture (CLASSIFIER_MODE=replay)
+│   └── prompts.py              # Prompt templates (versioned, PROMPT_VERSION)
 │
 ├── warehouse/
-│   ├── __init__.py
-│   ├── snowflake_writer.py     # Writes enriched records to Snowflake raw table
-│   └── ddl/
-│       └── raw_service_requests.sql   # CREATE TABLE statement
+│   ├── __init__.py             # COLUMNS contract + build_writer() (WAREHOUSE_BACKEND)
+│   ├── duckdb_writer.py        # Local MERGE writer (default)
+│   ├── snowflake_writer.py     # Snowflake MERGE writer
+│   └── ddl/                    # raw_service_requests.sql (Snowflake), .duckdb.sql
 │
 ├── dbt_project/
-│   ├── dbt_project.yml
-│   ├── profiles.yml.example    # Snowflake connection template
-│   ├── models/
-│   │   ├── staging/
-│   │   │   └── stg_service_requests.sql
-│   │   ├── intermediate/
-│   │   │   └── int_resolved_requests.sql
-│   │   └── marts/
-│   │       ├── fct_sla_compliance.sql
-│   │       └── dim_request_category.sql
-│   ├── tests/
-│   │   └── assert_sla_pct_between_0_and_1.sql
-│   └── macros/
-│       └── sla_hours.sql
+│   ├── dbt_project.yml         # vars: sla_thresholds, max_unparseable_close_time_pct
+│   ├── profiles.yml.example    # targets: local (duckdb), snowflake
+│   ├── models/staging|intermediate|marts/
+│   ├── macros/                 # sla_hours.sql, cross_db.sql (json_text, try_to_timestamp)
+│   └── tests/                  # grain, sla_pct range, close-time drift tripwire
+│
+├── data/fixtures/              # 300 real requests + recorded Claude labels (demo, CI, eval)
+├── eval/                       # LABELING_GUIDE.md, labels/label_sheet.csv, RESULTS.md
+├── docs/                       # demo.gif, screenshots
 │
 ├── scripts/
+│   ├── demo_local.sh           # Zero-credential demo (make demo-local / demo-local-nokafka)
 │   ├── run_pipeline.sh         # Starts poller + classifier in parallel
 │   ├── create_kafka_topic.sh   # One-time topic setup
-│   └── backfill_historical.py  # Optional: bulk-load past 30 days
+│   ├── backfill_historical.py  # Bulk-load past N days (unclassified)
+│   ├── classify_existing.py    # Classify 'Unknown' rows in place (--sample-seed)
+│   ├── export_fixture.py / load_fixture.py
+│   ├── sla_report.py           # Print the SLA mart from DuckDB
+│   └── make_label_sheet.py / score_labels.py
 │
-└── tests/
-    ├── test_classifier.py
-    ├── test_poller.py
-    └── test_snowflake_writer.py
+└── tests/                      # pytest: poller, schema drift, dbt tripwire, classifier,
+                                # replay, duckdb/snowflake writers, label scoring
 ```
 
 ---
@@ -120,8 +116,8 @@ class EnrichedRequest(ServiceRequest):
     days_to_close: Optional[float]   # null if still open
 ```
 
-### Snowflake Raw Table: `RAW.SERVICE_REQUESTS`
-Mirrors `EnrichedRequest` fields, plus `_inserted_at TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP`.
+### Raw Table: `RAW.SERVICE_REQUESTS` (DuckDB and Snowflake)
+Mirrors `EnrichedRequest` fields in the order of `warehouse.COLUMNS`, plus `_inserted_at` (default current timestamp). `raw_payload` is `JSON` in DuckDB, `VARIANT` in Snowflake; timestamps are stored as UTC wall-clock.
 
 ### dbt Mart: `fct_sla_compliance`
 ```
@@ -139,10 +135,13 @@ SLA thresholds defined in `dbt_project.yml` vars:
 
 - **Kafka messages**: always JSON, always include `service_request_id` as the message key for log compaction compatibility
 - **Langfuse tracing**: every LLM call must set `trace_name="urgency_classification"`, `tags=[city, service_code]`, and capture input/output tokens in metadata
-- **Idempotency**: the Snowflake writer uses `MERGE INTO` on `service_request_id` — never plain INSERT
+- **Idempotency**: every warehouse writer uses `MERGE INTO` on `service_request_id` — never plain INSERT
 - **Error handling**: failed classifications write to a `civic.requests.dlq` dead-letter topic with the exception serialized in the message header
 - **Pydantic everywhere**: no raw dicts crossing module boundaries
-- **dbt**: all models have `{{ config(materialized='incremental', unique_key='service_request_id') }}` where applicable
+- **dbt**: staging and intermediate are views, marts are tables. Any incremental model must set `unique_key`. Engine-specific SQL goes through `macros/cross_db.sql`, never inline
+- **Replay, not mocks**: the demo and CI replay labels Claude actually produced (`data/fixtures/`). A replay miss goes to the DLQ; never invent a label
+- **Schema drift**: new upstream keys are preserved in `raw_payload` and logged; anything the SLA marts depend on gets a dbt test that fails the build
+- **Evaluation**: hand-labels are made blind (`eval/LABELING_GUIDE.md`) and committed before scoring; published numbers come from `make score-labels`
 - **Logging**: use `structlog` with JSON output; include `trace_id` in every log line from the classifier
 - **Polling cadence**: default 60-second interval; configurable via `POLL_INTERVAL_SECONDS`
 
@@ -151,31 +150,23 @@ SLA thresholds defined in `dbt_project.yml` vars:
 ## Scripts
 
 ```bash
-# Start infrastructure
-docker compose up -d
+make help                  # every target
+make demo-local            # zero-credential demo through Kafka (needs Docker)
+make demo-local-nokafka    # same, straight into DuckDB (what CI runs)
 
-# Create Kafka topics
-bash scripts/create_kafka_topic.sh
+make up && make topics     # Kafka + Zookeeper; civic.requests.raw + .dlq
+make run                   # poller + classifier in parallel
+python -m ingestion.open311_poller [--dry-run]
+python -m classifier.consumer [--exit-when-idle SECONDS]
 
-# Run full pipeline (poller + classifier in parallel)
-bash scripts/run_pipeline.sh
+make backfill DAYS=7                 # historical load, unclassified
+make classify LIMIT=300 SEED=311     # classify a seeded sample in place
+make export-fixture                  # refresh data/fixtures/
 
-# Run only the poller
-python -m ingestion.open311_poller
-
-# Run only the classifier/consumer
-python -m classifier.consumer
-
-# dbt commands (from dbt_project/ dir)
-dbt run
-dbt test
-dbt docs generate && dbt docs serve
-
-# Backfill last 30 days (one-time)
-python scripts/backfill_historical.py --days 30
-
-# Tests
-pytest tests/ -v
+make dbt / make dbt-test / make docs # DBT_TARGET=local (default) or snowflake
+make report                          # SLA mart summary from DuckDB
+make label-sheet / make score-labels # blind hand-label evaluation
+make test                            # pytest
 ```
 
 ---
@@ -204,7 +195,13 @@ LANGFUSE_PUBLIC_KEY=
 LANGFUSE_SECRET_KEY=
 LANGFUSE_HOST=https://cloud.langfuse.com   # or self-hosted URL
 
-# Snowflake
+# Warehouse / classifier mode
+WAREHOUSE_BACKEND=duckdb       # duckdb | snowflake
+DUCKDB_PATH=data/civic_311.duckdb
+CLASSIFIER_MODE=live           # live | replay
+DBT_TARGET=local               # local | snowflake
+
+# Snowflake (only when WAREHOUSE_BACKEND=snowflake)
 SNOWFLAKE_ACCOUNT=
 SNOWFLAKE_USER=
 SNOWFLAKE_PASSWORD=
