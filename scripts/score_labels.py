@@ -56,7 +56,8 @@ def cohens_kappa(pairs: list[tuple[str, str]], weights: str | None = None) -> fl
 def score(sheet: str, fixture: str) -> dict:
     model = {r.service_request_id: r for r in load_fixture(fixture)}
     rows = []
-    with open(sheet, encoding="utf-8", newline="") as fh:
+    # utf-8-sig: Excel's "CSV UTF-8" save adds a BOM that would corrupt the first header.
+    with open(sheet, encoding="utf-8-sig", newline="") as fh:
         for r in csv.DictReader(fh):
             if not r["human_label"].strip():
                 raise SystemExit(f"item {r['item']} ({r['service_request_id']}) has no human_label yet")
