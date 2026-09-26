@@ -88,6 +88,10 @@ Where the model's urgency and the city's close times disagree:
 > and in the blind hand-label check the human labelled both rodent rows **Medium** (72 h), against which 2.7
 > days is borderline. The "gap" depends on a label a human disagreed with, so it is a lead, not a finding.
 
+The SLA mart as `make report` prints it after the demo (all categories with 3 or more classified requests):
+
+![SLA compliance mart from the 2026-09-23 fixture: 300 classified requests, 87.0% pooled, per-category urgency, SLA % and average days to close](docs/sla-report.png)
+
 **Earlier Snowflake run (May 2026).** The Snowflake path was verified live on 2026-05-27: 7,200 rows
 backfilled, 300 classified, 0 duplicates across two backfills, and the 20 dbt tests of that version passing
 (screenshot below).
