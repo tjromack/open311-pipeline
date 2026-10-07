@@ -155,3 +155,11 @@ closed-before-created request, by design), in ~20 s. pytest: 61 passed.
   `fct_portal_backlog_weekly`, and seven singular tests: the four the playbook names plus full
   FY coverage, latest-version-wins and the backlog flow identity.
 - 2026-10-06 — Full FY2026 pull started (365 partitions, ~1 day per 2 s after warm-up).
+- 2026-10-06 — Merged to `main` (CI green: 61 tests, dbt 58/58 on the fixture). Scheduled the
+  follow-up re-pull: Windows Task Scheduler task **"Open311 portal re-pull (A2)"**, once, Tue
+  2026-10-13 09:00 (runs at next availability if the PC is off), executing
+  `scripts/scheduled_repull.ps1`: re-pull last 30 days → resolve parents → `dbt build` → report,
+  logged to `logs/scheduled_repull_<timestamp>.log`. Success: Windows notification. Failure (any
+  step): Windows notification + a GitHub issue on the repo with the step and log tail. Both paths
+  tested on a scratch copy of the warehouse (success in 30 s; failure via `-SimulateFailure
+  -DryRunIssue`).

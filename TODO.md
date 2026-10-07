@@ -111,6 +111,7 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] Re-pull of the last 30 days, latest version per request with a deterministic tiebreak
 - [x] Reconciliation tests: landed = portal count, cohort denominators = created, running totals = monthly group-by, quarters sum to year
 - [ ] Re-run `make portal-repull` a week or more after the base pull, so the dedup collapses real status changes (the first re-pull ran 25 minutes later: 67 changed records, 31 of them stale reads)
+  - Scheduled: Task Scheduler "Open311 portal re-pull (A2)", 2026-10-13 09:00 (`scripts/scheduled_repull.ps1`; failure opens a GitHub issue). Afterwards: compare `versions_seen > 1` changes and update docs/A2-FISCAL-YEAR.md
 - [ ] Case study: the SLA-bias fix becomes "What broke" (site repo)
 - [ ] Re-score against §01
 
