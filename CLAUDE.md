@@ -42,6 +42,7 @@ open311-pipeline/
 │
 ├── ingestion/
 │   ├── open311_poller.py       # Polls Chicago 311 API, drift check, publishes to Kafka
+│   ├── portal_loader.py        # Full fiscal year from the city data portal, per-day count-verified (A2)
 │   ├── kafka_producer.py       # Wraps confluent-kafka Producer
 │   └── schemas.py              # ServiceRequest, EnrichedRequest, observed Open311 key set
 │
@@ -55,16 +56,17 @@ open311-pipeline/
 │   ├── __init__.py             # COLUMNS contract + build_writer() (WAREHOUSE_BACKEND)
 │   ├── duckdb_writer.py        # Local MERGE writer (default)
 │   ├── snowflake_writer.py     # Snowflake MERGE writer
-│   └── ddl/                    # raw_service_requests.sql (Snowflake), .duckdb.sql
+│   └── ddl/                    # raw_service_requests.sql (Snowflake), .duckdb.sql, portal_requests.duckdb.sql
 │
 ├── dbt_project/
 │   ├── dbt_project.yml         # vars: sla_thresholds, max_unparseable_close_time_pct
 │   ├── profiles.yml.example    # targets: local (duckdb), snowflake
 │   ├── models/staging|intermediate|marts/
+│   ├── seeds/                  # fiscal_calendar.csv, portal_sr_types.csv (per-type urgency + scope)
 │   ├── macros/                 # sla_hours.sql, cross_db.sql (json_text, try_to_timestamp)
-│   └── tests/                  # grain, sla_pct range, close-time drift tripwire
+│   └── tests/                  # grain, sla_pct range, drift tripwire, portal reconciliations
 │
-├── data/fixtures/              # 300 real requests + recorded Claude labels (demo, CI, eval)
+├── data/fixtures/              # 300 classified requests (replay) + portal FY sample (5 types)
 ├── eval/                       # LABELING_GUIDE.md, labels/label_sheet.csv, RESULTS.md
 ├── docs/                       # demo.gif, screenshots
 │
@@ -76,7 +78,9 @@ open311-pipeline/
 │   ├── classify_existing.py    # Classify 'Unknown' rows in place (--sample-seed)
 │   ├── export_fixture.py / load_fixture.py
 │   ├── sla_report.py           # Print the SLA mart from DuckDB
-│   └── make_label_sheet.py / score_labels.py
+│   ├── make_label_sheet.py / score_labels.py
+│   ├── make_fiscal_calendar.py / classify_categories.py
+│   └── portal_fixture.py / portal_report.py
 │
 └── tests/                      # pytest: poller, schema drift, dbt tripwire, classifier,
                                 # replay, duckdb/snowflake writers, label scoring
@@ -141,6 +145,7 @@ SLA thresholds defined in `dbt_project.yml` vars:
 - **dbt**: staging and intermediate are views, marts are tables. Any incremental model must set `unique_key`. Engine-specific SQL goes through `macros/cross_db.sql`, never inline
 - **Replay, not mocks**: the demo and CI replay labels Claude actually produced (`data/fixtures/`). A replay miss goes to the DLQ; never invent a label
 - **Schema drift**: new upstream keys are preserved in `raw_payload` and logged; anything the SLA marts depend on gets a dbt test that fails the build
+- **Portal path**: a partition reaches staging only when the portal's count before and after paging equals the rows landed. Raw is append-only versions; the latest version wins by `last_modified_date`, then pull time. SLA compliance is measured over the created cohort (open past deadline = missed), never over closed requests alone
 - **Evaluation**: hand-labels are made blind (`eval/LABELING_GUIDE.md`) and committed before scoring; published numbers come from `make score-labels`
 - **Logging**: use `structlog` with JSON output; include `trace_id` in every log line from the classifier
 - **Polling cadence**: default 60-second interval; configurable via `POLL_INTERVAL_SECONDS`
@@ -166,6 +171,10 @@ make export-fixture                  # refresh data/fixtures/
 make dbt / make dbt-test / make docs # DBT_TARGET=local (default) or snowflake
 make report                          # SLA mart summary from DuckDB
 make label-sheet / make score-labels # blind hand-label evaluation
+make portal-load FY=2026             # full fiscal year from the city portal (~22 min)
+make portal-repull / portal-parents  # last-30-day re-pull; out-of-window parent lookup
+make classify-categories             # per-type urgency seed (needs ANTHROPIC_API_KEY)
+make portal-report                   # closed-only vs cohort SLA, weekly backlog
 make test                            # pytest
 ```
 
@@ -194,6 +203,9 @@ ANTHROPIC_MODEL=claude-haiku-4-5-20251001
 LANGFUSE_PUBLIC_KEY=
 LANGFUSE_SECRET_KEY=
 LANGFUSE_HOST=https://cloud.langfuse.com   # or self-hosted URL
+
+# Chicago Data Portal (optional app token for higher rate limits)
+SOCRATA_APP_TOKEN=
 
 # Warehouse / classifier mode
 WAREHOUSE_BACKEND=duckdb       # duckdb | snowflake

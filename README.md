@@ -26,7 +26,7 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .\.venv\Scripts\A
 pip install -r requirements.txt
 
 make demo-local          # Docker running: fixture -> Kafka -> consumer -> DuckDB -> dbt build -> SLA report
-make demo-local-nokafka  # no Docker: fixture -> DuckDB -> dbt build -> SLA report  (~10 s)
+make demo-local-nokafka  # no Docker: fixture -> DuckDB -> dbt build -> SLA reports  (~10 s)
 ```
 
 ![make demo-local: 300 requests through Kafka, classified, merged into DuckDB, dbt build 25/25, SLA report](docs/demo.gif)
@@ -34,8 +34,9 @@ make demo-local-nokafka  # no Docker: fixture -> DuckDB -> dbt build -> SLA repo
 The demo replays **300 real Chicago 311 requests** with the labels Claude Haiku 4.5 actually gave them
 ([`data/fixtures/`](data/fixtures/README.md)). They go through the same consumer, `MERGE` writer and dbt
 project as a live run. Only the LLM call is swapped for a lookup (`CLASSIFIER_MODE=replay`), and a request
-with no recorded label goes to the dead-letter queue instead of getting an invented one. CI runs the no-Kafka
-demo on every push.
+with no recorded label goes to the dead-letter queue instead of getting an invented one. The demo also loads
+a city-portal fixture (five whole service types across fiscal year 2026) and prints the cohort-vs-closed-only
+SLA comparison below. CI runs the no-Kafka demo on every push.
 
 To classify live instead, set `ANTHROPIC_API_KEY` and see [Full pipeline](#full-pipeline-live-data).
 
@@ -51,7 +52,9 @@ account with SQL.
   treated as a pipeline stage with tracing, a DLQ and tests, not a notebook cell.
 - **It does:** poll Open311 → publish to Kafka (keyed by `service_request_id`) → classify urgency with
   structured output → route every failure to `civic.requests.dlq` with the exception in the headers →
-  `MERGE` into DuckDB (default) or Snowflake → dbt staging / intermediate / marts with 21 data tests.
+  `MERGE` into DuckDB (default) or Snowflake → dbt staging / intermediate / marts. A second path loads a
+  full fiscal year from the city's data portal, count-verified per day, and measures SLA compliance over the
+  whole created cohort, not just requests that already closed. 45 dbt data tests across both.
 - **It does not:** dispatch anything, predict close times, or know Chicago's official SLAs (the thresholds
   are this project's, in [`dbt_project.yml`](dbt_project/dbt_project.yml)). See
   [What this does not let me claim](#what-this-does-not-let-me-claim).
@@ -99,13 +102,49 @@ The Snowflake trial has since expired, so those rows can't be re-queried, and th
 
 ---
 
+## A full fiscal year, and the closed-only bias it exposes
+
+The sample above can only see requests that already closed, which flatters compliance: slow requests are
+still open and drop out. The portal path fixes that ([`docs/A2-FISCAL-YEAR.md`](docs/A2-FISCAL-YEAR.md)).
+
+- **Load:** every request created in federal FY2026 (2025-10-01 – 2026-09-30) from the Chicago Data Portal
+  (dataset `v6vf-nfxy`): **2,124,780 rows**, one partition per day, **365/365 partitions verified**: the portal's
+  own count before and after paging equals the rows landed. A re-pull of the last 30 days (182,600 rows)
+  adds second versions; staging keeps the latest per request with a total, deterministic tiebreak.
+- **Cohort measure:** every created request gets a state. **Met** means it closed within its threshold.
+  **Missed** means it closed late, *or* is still open past its deadline. **Pending** means it's still open
+  and not yet due. **Excluded** covers duplicates, cancellations, and four types that close at intake.
+
+| FY2026, extract as of 2026-10-06 | Requests | Compliance |
+|---|---:|---:|
+| Closed-only (the original method) | 711,810 closed | **51.0%** |
+| Cohort (open past deadline = missed) | 810,671 due | **44.8%** |
+| **Closed-only overstates compliance by** | | **6.2 pct points** |
+
+The bias runs one way: 85 of 100 in-scope categories look better closed-only, and none look worse. It's
+largest for the Low tier (63.2% → 51.1%), whose 168-hour window lets slow requests sit open. Rodent
+baiting, a 4-request lead in the sample, is **18.1%** within its 24-hour window across 41,502 requests.
+
+Urgency on this path is per **service type**, classified once each (100 in-scope types), because per-request
+labels for 2.1M rows would cost ~$3,800. The category label matches **97%** (232/240) of the per-request
+labels in the 300-row fixture.
+
+```bash
+make portal-load FY=2026     # ~22 min download; the warehouse grows to ~230 MB; no key needed
+make portal-repull FY=2026   # last 30 days again (second versions for the dedup)
+make portal-parents          # look up parent requests created outside the window
+make dbt && make portal-report
+```
+
+---
+
 ## How it's verified
 
 **CI on every push** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): a clean checkout,
 `pip install -r requirements.txt`, the full pytest suite, the no-Kafka demo (every dbt model and data test
 against the real fixture), and `dbt parse` against the Snowflake target.
 
-**53 pytest tests**, grouped by the failure each one targets:
+**61 pytest tests**, grouped by the failure each one targets:
 
 | Failure mode | Tests |
 |---|---|
@@ -115,8 +154,9 @@ against the real fixture), and `dbt parse` against the Snowflake target.
 | LLM or parse failure must go to the DLQ, never crash the consumer | `tests/test_classifier.py`, `tests/test_replay_classifier.py` |
 | Re-delivery must not duplicate: `MERGE` idempotency, batching, UTC normalisation | `tests/test_duckdb_writer.py`, `tests/test_snowflake_writer.py` |
 | Agreement metrics are computed correctly (kappa vs. a hand-worked example) | `tests/test_score_labels.py` |
+| Portal load: counts disagree, paging past the page limit, a duplicate inside one pull, 503 retried / 400 not, parents looked up | `tests/test_portal_loader.py` |
 
-**21 dbt data tests**, all run by `dbt build`:
+**45 dbt data tests**, all run by `dbt build`: 21 on the Open311 path, 24 on the portal path.
 
 - *Source (`RAW.SERVICE_REQUESTS`):* `unique` + `not_null` on `service_request_id`; `not_null` on
   `status`, `requested_datetime`; `accepted_values` on `urgency_label`
@@ -128,6 +168,13 @@ against the real fixture), and `dbt parse` against the Snowflake target.
 - *Singular:* `assert_fct_sla_grain_unique` (department × service_code × month is a key),
   `assert_sla_pct_between_0_and_1`, and **`assert_closed_requests_have_close_time`**, the schema-drift
   tripwire described below
+- *Portal path, singular:* `assert_portal_verified_partitions_reconcile` (landed = portal count),
+  `assert_portal_fy_fully_covered` (every FY day verified), `assert_portal_cohort_denominators`
+  (states partition the created requests; marts total = staging), `assert_portal_running_total_reconciles`
+  (window running total = self-join recompute), `assert_portal_quarters_sum_to_year`,
+  `assert_portal_latest_version_wins` (re-pull dedup), `assert_portal_backlog_flow_identity`, and a warn-level
+  `assert_portal_close_not_before_create` (one request in FY2026). Plus `unique`/`not_null`/`accepted_values`
+  on the portal staging, cohort and marts.
 
 **Classifier agreement with blind hand-labels.** 50 of the 300 were drawn at random with a fixed seed and
 labelled without seeing the model's answer, using only the fields the model sees and the prompt's own tier
@@ -183,10 +230,15 @@ When classification drifts, what to look at:
 
 - **Single city, one week, 300 labels.** One Open311 feed (Chicago), one 7-day window, 300 classified
   requests. Per-category SLA percentages rest on small n (4 rodent complaints) and are leads, not findings.
-- **SLA compliance is biased upward.** The backfill takes requests *opened* in the last 7 days that are
-  *already closed*, so slow requests are still open and excluded. Low's 153/153 is true by construction
-  (anything closed within 7 days beats a 168 h threshold). A fair measurement needs a cohort observed until
-  it closes.
+- **The sample's SLA numbers are biased upward.** The 7-day backfill takes requests that are *already
+  closed*, so slow ones are missing. Low's 153/153 is true by construction. The portal path measures the
+  whole created cohort instead, and puts the bias at 6.2 points for FY2026 (above). The sample's numbers
+  stay as they are, labelled.
+- **Portal-path urgency is per service type, not per request.** It is checked against per-request labels
+  (97% agreement on 240), but a request that's unusually urgent for its category gets its category's tier.
+  The FY picture is a snapshot as of 2026-10-06; 1,365 requests were still pending, and later re-pulls will
+  move open requests to closed. 1,066 parent requests referenced by duplicates aren't in the public portal at
+  all. The portal path writes DuckDB only; its models parse for Snowflake but haven't run there.
 - **The SLAs are this project's, not the city's.** The 4 / 24 / 72 / 168 h thresholds are chosen per urgency
   tier in `dbt_project.yml`. They are not Chicago's service commitments.
 - **"Days to close" is approximate.** It is measured to Open311's `updated_datetime`, which is the last status
@@ -198,8 +250,9 @@ When classification drifts, what to look at:
   `service_name` alone and has no re-label consistency check, and the random 50 include no row the model
   called Critical, so Critical precision is unmeasured.
 - **Not production-scale.** One consumer process classifies sequentially (~0.8 requests/s), with no
-  load testing, autoscaling or exactly-once guarantees beyond idempotent `MERGE`. `department` is mostly NULL
-  (Open311 puts `group` on the services catalog, not on requests).
+  load testing, autoscaling or exactly-once guarantees beyond idempotent `MERGE`. On the Open311 path
+  `department` is mostly NULL (Open311 puts `group` on the services catalog); the portal path carries the
+  city's `owner_department`.
 - **Snowflake mode is not continuously verified.** CI parses it but can't run it, and its last live run was
   May 2026.
 

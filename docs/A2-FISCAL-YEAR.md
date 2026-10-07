@@ -55,6 +55,87 @@ locally after the load, not against the API.
 - **DuckDB only for the portal path.** The models stay ANSI so the Snowflake target still parses,
   but the loader writes DuckDB.
 
+## Results (FY2026, extract as of 2026-10-06 08:24 Chicago time)
+
+All numbers from `make portal-report` and the queries recorded in the progress log.
+
+**The load.** 2,124,780 requests created in FY2026, landed in 365 day partitions; every partition
+verified (portal count before = after = landed). Re-pull of the last 30 days: 182,600 rows, 30/30
+verified. Raw holds 2,307,380 versions; staging keeps 2,124,780 (one per request).
+
+**The SLA fix, headline.**
+
+| | Requests | Compliance |
+|---|---:|---:|
+| Closed-only (the original method) | 711,810 closed | **51.0%** |
+| Cohort (still-open past deadline = missed) | 810,671 due | **44.8%** |
+| Bias of closed-only | | **+6.2 pct points** |
+
+The cohort is 812,036 in-scope requests (362,993 met, 447,678 missed, 1,365 pending). 1,312,744 are
+excluded: 1,191,982 of four types closed at intake, 91,600 duplicates (tracked under the parent),
+and 29,162 canceled. Of the 100 in-scope categories, **85 look better closed-only and none look
+worse**. The bias is one-directional, as the mechanism predicts.
+
+By tier (category-level labels):
+
+| Tier | Cohort | Closed-only | Cohort | Pending | Missed while still open |
+|---|---:|---:|---:|---:|---:|
+| Low (168 h) | 385,399 | 63.2% | 51.1% | 1,365 | 73,433 |
+| Medium (72 h) | 213,947 | 45.7% | 41.9% | 0 | 17,846 |
+| High (24 h) | 200,856 | 38.2% | 36.9% | 0 | 6,626 |
+| Critical (4 h) | 11,834 | 28.4% | 26.1% | 0 | 956 |
+
+The bias is largest for **Low**: the long window lets slow requests sit open, which is exactly
+the population closed-only drops. Largest category gaps (≥1,000 cohort requests): Stray Animal
+Complaint +18.1 pp, Sewer Cleaning Inspection +13.2, Inspect Public Way +12.9, Pet Wellness Check
++12.7, Alley Sewer Inspection +11.4.
+
+**Rodent baiting at scale.** The 300-row sample's "0 of 4 within 24 h" lead, measured on the full
+year: 41,502 cohort requests, **18.1%** within the High (24 h) window (closed-only 18.5%). The
+category label is the model's (High); the blind hand-label check put rodent baiting at Medium,
+so the finding still depends on that tier.
+
+**By department** (cohort ≥ 10,000; closed-only → cohort): Streets and Sanitation 51.9% → 47.3%
+(482,788) · CDOT 53.7% → 45.3% (164,097) · Water Management 46.6% → 33.7% (64,451) · Buildings
+18.5% → 15.1% (41,114) · Animal Care and Control 57.9% → 53.2% (24,744). The portal's
+`owner_department` fills the gap the Open311 path had (`department` mostly NULL).
+
+**Backlog.** In-scope FY-created requests open at week end rose from 6,252 (week ending
+2025-10-05) to a peak of 107,911 (2026-09-20); 53 weeks. Flow identity holds every week.
+
+**Parents.** All 91,600 parent links come from duplicates. 86,291 point inside the extract;
+3,475 (2,592 distinct parents) point to requests created before the window, found by ID:
+**window artifacts, not bad data**. 1,834 links (1,066 distinct parents) point to IDs the public
+portal doesn't return even when queried one at a time; 766 of those carry FY2026 numbers, so the
+window doesn't explain them. *Inference:* the parent records aren't published (the children are
+mostly water and street categories).
+
+**Re-pull dedup, and stale reads.** 182,600 requests have two versions. The re-pull's version
+won for 182,569. For the other **31**, the re-pull (taken 25 minutes after the base pull) served
+an *older* record (`Open`, last modified in September) where the base pull already had it
+`Completed` with a closed date. The tiebreak ranks `last_modified_date` first, so staging keeps
+the Completed version; "latest pull wins" would have silently reopened them.
+
+**Category labels vs. per-request labels.** 44 of the 100 in-scope types appear in the 300-row
+fixture; the category label equals the modal per-request label for 40 of 44 (two of the four
+differences are 2–2 ties), and matches 232 of 240 per-request labels (97%).
+
+**Data quality.** Every Completed and Canceled request has a `closed_date`; no Open one does. One
+request closes before it was created (SR26-00411461, same day, 33 minutes), flagged by a
+warn-level test and kept.
+
+**Build.** `dbt build` on the full year: 58 nodes, PASS=57 WARN=1 ERROR=0 (the warn is the one
+closed-before-created request, by design), in ~20 s. pytest: 61 passed.
+
+## What this lets the project claim, and what it doesn't
+
+- Claims: a reproducible, count-verified full fiscal year; a cohort SLA measure with the bias
+  quantified against the closed-only one; reconciliations that hold on 2.1M rows.
+- Does not claim: per-request urgency for the full year (tiers are per category); Chicago's own
+  SLAs (thresholds are the project's); a final FY picture (1,365 requests are still pending as of
+  the extract, and later re-pulls will change open/closed states); anything about the 1,066
+  unpublished parents beyond their absence.
+
 ## Progress log
 
 - 2026-10-06 — Branch `a2-fiscal-year`. Portal probed (above).

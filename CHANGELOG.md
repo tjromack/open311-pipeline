@@ -6,6 +6,24 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Added
+
+- **A full fiscal year from the city data portal (add-on A2).** `ingestion/portal_loader.py`
+  loads federal FY2026 (2,124,780 requests) from the Chicago Data Portal, one partition per day,
+  each verified against the portal's own count before and after paging; append-only versions
+  plus a pull ledger. A re-pull of the last 30 days collapses to the latest version per request
+  (`last_modified_date`, then pull time, then pull ID).
+- **Cohort SLA beside closed-only.** `int_portal_cohort` gives every created request a state
+  (met / missed / pending / excluded). FY2026: closed-only 51.0% vs cohort 44.8%, a 6.2-point
+  upward bias; 85 of 100 categories biased up, none down.
+- Weekly backlog by date-range overlap, parent-link resolution (window artifacts vs. parents
+  missing from the public portal), fiscal-calendar seed, per-type urgency seed (category label
+  matches 97% of per-request fixture labels).
+- Eight portal reconciliation tests (landed = portal count, full-year coverage, cohort
+  denominators, running totals vs. a self-join recompute, quarters sum to the year, latest
+  version wins, backlog flow identity, a warn-level date anomaly); eight loader tests.
+- A committed portal fixture (five whole service types across FY2026) for CI and the demo.
+
 ## [1.1.0] — 2026-09-23
 
 The pipeline runs from a fresh clone with no accounts, every dbt test runs on

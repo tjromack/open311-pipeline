@@ -242,3 +242,36 @@ both sides of that on the real fixture.
   place without bumping `_inserted_at`, so an incremental model on that
   watermark silently kept stale labels. The source is thousands of rows, so a
   view is always fresh at no meaningful cost. Marts are tables.
+
+## The portal path: a full fiscal year (add-on A2)
+
+The Open311 API only serves recent requests, and the backfill can only see requests that have
+already closed. A second, batch path loads a whole fiscal year from the city's data portal and
+measures SLA compliance over every request created in it.
+
+```mermaid
+flowchart LR
+    P[Chicago Data Portal<br/>v6vf-nfxy] -->|one request per day<br/>stable sort, count before/after| L[portal_loader]
+    L -->|append-only versions| R[(raw.portal_requests)]
+    L -->|per-day ledger| G[(raw.portal_pulls)]
+    R --> S[stg_portal_requests<br/>latest verified version]
+    G --> S
+    S --> C[int_portal_cohort<br/>met / missed / pending / excluded]
+    T[(seeds: fiscal_calendar,<br/>portal_sr_types)] --> C
+    C --> M[SLA side-by-side,<br/>volume, weekly backlog]
+```
+
+| Piece | Decision | Why |
+|---|---|---|
+| Paging | One partition per created day, `$order=created_date, sr_number` | Ordering 2.1M rows by `sr_number` server-side timed out (>300 s for 1,000 rows); a day returns in ~1 s, and each day becomes its own reconciliation unit |
+| Verification | Portal `count(*)` before and after paging must equal rows landed, per day; otherwise `count_mismatch` and a non-zero exit | Catches truncation and records changing mid-pull; staging reads `verified` partitions only |
+| Raw | Append-only, `(pull_id, sr_number)` key | A re-pull keeps both versions; a request served twice inside one pull is rejected |
+| Dedup | Latest version by `last_modified_date`, then `pulled_at`, then `pull_id` | The first re-pull served 31 stale records (older `last_modified_date`, still `Open`); "latest pull wins" would have reopened them |
+| Urgency | One label per service type (`portal_sr_types` seed) | 2.1M per-request calls ≈ $3,800; category labels match 97% of per-request labels where they overlap |
+| Scope | Four types excluded as "closed at intake" (p90 under six minutes) | 1.19M instant closures would otherwise count as met |
+| Cohort states | `met`, `missed` (closed late or open past deadline), `pending` (open, not yet due), `excluded` | The states partition the created cohort, which makes the denominator testable |
+| Calendar | Federal fiscal calendar as a seed | Engine-neutral date spine; quarters and weeks come from one table |
+
+Timestamps on this path are the portal's floating Chicago local time and are never mixed with
+the Open311 path's UTC values. The "as of" time for pending/missed is the latest
+`last_modified_date` in the extract.

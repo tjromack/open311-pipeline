@@ -102,10 +102,22 @@ _Goal: Mart tables computing SLA compliance by department and category; dbt test
 - [x] G5/G8: limits section and demonstrates line
 - [x] Record a demo GIF of `make demo-local` (`docs/demo.gif`)
 
+### Add-on A2 — full fiscal year + SLA-bias fix (playbook v3, 2026-10-06, branch `a2-fiscal-year`)
+
+- [x] Portal loader for one federal fiscal year, stable sort, landed = portal count (365/365 days verified)
+- [x] Cohort SLA (open past deadline = missed) beside closed-only; bias published (+6.2 pp FY2026)
+- [x] Backlog by week via date-range overlap, open-ended requests handled
+- [x] Parent links resolved; window artifacts vs. parents absent from the public portal documented
+- [x] Re-pull of the last 30 days, latest version per request with a deterministic tiebreak
+- [x] Reconciliation tests: landed = portal count, cohort denominators = created, running totals = monthly group-by, quarters sum to year
+- [ ] Re-run `make portal-repull` a week or more after the base pull, so the dedup collapses real status changes (the first re-pull ran 25 minutes later: 67 changed records, 31 of them stale reads)
+- [ ] Case study: the SLA-bias fix becomes "What broke" (site repo)
+- [ ] Re-score against §01
+
 ### Stretch / nice-to-have follow-ups (not blocking v1.0.0)
 
 - [ ] **Department mapping** — `dim_request_category.department` is mostly NULL because Open311's `group` field lives only on the services catalog, not on requests. Fix by seeding a `service_code → department` CSV, or pulling `services.json` during backfill and joining.
 - [ ] **Classify the full backfill** — ~7,200 remaining Unknown rows at ~0.8 req/s is ~2.5 hours sequential and ~$13 (measured ~$0.0018/request). Concurrent classification (`asyncio` + bounded semaphore) or the Message Batches API (50% cost, asynchronous) would cut both.
 - [ ] **Loom recording** — 2-minute walkthrough of the live pipeline: events flowing → Langfuse traces → Snowflake rows → dbt SLA chart
 - [ ] **dbt source freshness** — declare `loaded_at_field: _inserted_at` on `civic_311.service_requests` so `dbt source freshness` warns when ingestion stalls
-- [ ] **Unbiased SLA cohort** — measure compliance on requests opened in a window and observed until closed, instead of the closed-only backfill
+- [x] **Unbiased SLA cohort** — done on the portal path (A2)

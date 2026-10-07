@@ -33,3 +33,31 @@ make export-fixture
 
 The API returns a moving window, so a rebuild produces a different sample.
 The committed file is the one every published number was computed from.
+
+---
+
+# Portal fiscal-year fixture (add-on A2)
+
+`portal_requests_sample.csv.gz`, `portal_pulls_sample.csv` and `portal_parent_lookup_sample.csv`
+feed the portal models in CI and in the no-accounts demo (`python scripts/portal_fixture.py load`).
+
+| | |
+|---|---|
+| Source | Chicago Data Portal, 311 Service Requests (`v6vf-nfxy`), public |
+| Window | Federal FY2026: requests created 2025-10-01 through 2026-09-30, every day |
+| Pulls | the full-year pull and the last-30-days re-pull of 2026-10-06 (both 100% verified) |
+| Kept | **every** version of every request of five whole service types: Water in Basement Complaint, Vicious Animal Complaint, No Water Complaint, Sign Repair Request - Stop Sign, Street Light Pole Damage Complaint |
+| Size | 29,684 request versions (27,736 requests; 1,948 re-pull versions); 1,408 duplicates, 950 open, 2,497 canceled |
+| Ledger | 395 partitions (365 + 30 re-pull days) |
+
+Whole types are kept, never sampled, so each day's count is exact. The ledger's expected counts
+are **derived** from the verified full pull filtered to these five types. They weren't
+re-queried from the portal with that filter. Each partition of the full pull was verified against the
+portal's own count.
+
+Rebuild (after `make portal-load`, `make portal-repull`, `make portal-parents`):
+
+```bash
+python scripts/portal_fixture.py export --types "Water in Basement Complaint" "Vicious Animal Complaint" \
+  "No Water Complaint" "Sign Repair Request - Stop Sign" "Street Light Pole Damage Complaint"
+```
