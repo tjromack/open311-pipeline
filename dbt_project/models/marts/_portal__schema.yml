@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: fct_portal_sla_monthly
+    description: "Closed-only vs cohort SLA compliance at owner_department x sr_type x fiscal month of creation (portal add-on A2)."
+    columns:
+      - name: sr_type
+        tests: [not_null]
+      - name: month_start
+        tests: [not_null]
+      - name: created_requests
+        tests: [not_null]
+
+  - name: fct_portal_sla_by_category
+    description: "Fiscal-year side-by-side of closed-only vs cohort SLA compliance per in-scope sr_type."
+    columns:
+      - name: sr_type
+        tests: [unique, not_null]
+
+  - name: fct_portal_volume_monthly
+    description: "Requests created per fiscal month, with a running total."
+    columns:
+      - name: fiscal_month
+        tests: [not_null]
+
+  - name: fct_portal_backlog_weekly
+    description: "Weekly open backlog of in-scope FY-created requests by owner_department, via date-range overlap."
+    columns:
+      - name: week_end
+        tests: [not_null]

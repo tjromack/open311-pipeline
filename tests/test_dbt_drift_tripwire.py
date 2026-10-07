@@ -25,6 +25,15 @@ PROJECT_DIR = REPO / "dbt_project"
 TRIPWIRE = "assert_closed_requests_have_close_time"
 
 
+def _load_portal_fixture(db_path: Path) -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("portal_fixture", REPO / "scripts" / "portal_fixture.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod.load(str(db_path))
+
+
 def _load(db_path: Path, rename_close_time: bool) -> None:
     records = []
     for line in (REPO / DEFAULT_FIXTURE).read_text(encoding="utf-8").splitlines():
@@ -33,6 +42,8 @@ def _load(db_path: Path, rename_close_time: bool) -> None:
             rec["raw_payload"]["closed_datetime"] = rec["raw_payload"].pop("updated_datetime")
         records.append(EnrichedRequest.model_validate(rec))
     DuckDBWriter(path=str(db_path)).upsert_batch(records)
+    # The project also builds the portal (A2) models; give them their committed fixture.
+    _load_portal_fixture(db_path)
 
 
 def _dbt_build(tmp_path: Path, monkeypatch, db_path: Path):

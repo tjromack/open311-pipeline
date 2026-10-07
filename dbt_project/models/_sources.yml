@@ -28,3 +28,25 @@ sources:
           - name: requested_datetime
             tests:
               - not_null
+
+  - name: chicago_portal
+    description: "Chicago Data Portal 311 extract (dataset v6vf-nfxy), landed by ingestion/portal_loader.py. Append-only: one row per request per pull."
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'CIVIC_311') if target.type == 'snowflake' else target.database }}"
+    schema: RAW
+    tables:
+      - name: portal_requests
+        identifier: PORTAL_REQUESTS
+        description: "Every version of every request seen by any pull. Grain: (pull_id, sr_number)."
+        columns:
+          - name: sr_number
+            tests:
+              - not_null
+          - name: pull_id
+            tests:
+              - not_null
+      - name: portal_pulls
+        identifier: PORTAL_PULLS
+        description: "Pull ledger. Grain: (pull_id, partition_date). Portal count before/after paging vs landed count."
+      - name: portal_parent_lookup
+        identifier: PORTAL_PARENT_LOOKUP
+        description: "Parent requests referenced by landed rows but created outside the pulled window, looked up by ID."

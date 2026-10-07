@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: int_portal_cohort
+    description: "Every request created in the fiscal year, with tier, threshold and SLA state (met/missed/pending/excluded)."
+    columns:
+      - name: sr_number
+        tests: [unique, not_null]
+      - name: sla_state
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['met', 'missed', 'pending', 'excluded']
+
+  - name: int_portal_parent_links
+    description: "Requests that name a parent, and where that parent was found."
+    columns:
+      - name: parent_location
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['in_extract', 'outside_window', 'not_found', 'not_looked_up']

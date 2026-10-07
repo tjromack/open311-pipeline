@@ -7,7 +7,7 @@ PYTHON ?= python
 DBT_PROJECT_DIR ?= dbt_project
 export DBT_PROFILES_DIR ?= $(CURDIR)/$(DBT_PROJECT_DIR)
 
-.PHONY: help demo-local demo-local-nokafka up topics run classify backfill export-fixture report label-sheet score-labels dbt dbt-test docs docs-serve test lint teardown
+.PHONY: help demo-local demo-local-nokafka up topics run classify backfill export-fixture report label-sheet score-labels portal-load portal-repull portal-parents classify-categories portal-report dbt dbt-test docs docs-serve test lint teardown
 
 help:                  ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -44,6 +44,21 @@ label-sheet:           ## Write the blind 50-row hand-labeling sheet (eval/label
 
 score-labels:          ## Score model labels vs. hand-labels -> eval/RESULTS.md.
 	$(PYTHON) scripts/score_labels.py
+
+portal-load:           ## Pull one federal fiscal year from the city data portal into DuckDB (FY=2026).
+	$(PYTHON) -m ingestion.portal_loader --fy $(or $(FY),2026)
+
+portal-repull:         ## Re-pull the fiscal year's last 30 days (a second version for the dedup).
+	$(PYTHON) -m ingestion.portal_loader --fy $(or $(FY),2026) --last-days 30
+
+portal-parents:        ## Look up parent requests created outside the pulled window.
+	$(PYTHON) -m ingestion.portal_loader --resolve-parents
+
+classify-categories:   ## Classify each portal service type once -> dbt seed (needs ANTHROPIC_API_KEY).
+	$(PYTHON) scripts/classify_categories.py
+
+portal-report:         ## Print the FY closed-only vs cohort SLA side-by-side and the weekly backlog.
+	$(PYTHON) scripts/portal_report.py
 
 $(DBT_PROJECT_DIR)/profiles.yml:
 	cp $(DBT_PROJECT_DIR)/profiles.yml.example $@

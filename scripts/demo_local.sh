@@ -60,8 +60,14 @@ else
   "$PYTHON" scripts/load_fixture.py --via duckdb
 fi
 
+step "Loading the city-portal fiscal-year fixture (5 service types, every day of FY2026)"
+"$PYTHON" scripts/portal_fixture.py load
+
 step "dbt build (models + data tests) on DuckDB"
 "$DBT" build --project-dir dbt_project
 
-step "SLA compliance mart"
+step "SLA compliance mart (Open311 sample)"
 "$PYTHON" scripts/sla_report.py
+
+step "Fiscal-year cohort vs closed-only SLA (portal fixture)"
+"$PYTHON" scripts/portal_report.py --min-requests 100

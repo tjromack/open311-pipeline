@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: stg_portal_requests
+    description: "Latest version of each portal request across verified pulls (deterministic tiebreak)."
+    columns:
+      - name: sr_number
+        tests: [unique, not_null]
+      - name: created_date
+        tests: [not_null]

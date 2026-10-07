@@ -28,6 +28,31 @@ models:
       +materialized: table
       +schema: marts
 
+seeds:
+  open311_pipeline:
+    +schema: seeds
+    fiscal_calendar:
+      +column_types:
+        calendar_date: date
+        fiscal_year: integer
+        fiscal_quarter: integer
+        fiscal_month: integer
+        month_start: date
+        week_start: date
+        week_end: date
+        day_of_week: integer
+    portal_sr_types:
+      +column_types:
+        sr_type: varchar
+        sr_short_code: varchar
+        in_sla_scope: boolean
+        scope_note: varchar
+        urgency_label: varchar
+        urgency_score: float
+        llm_reasoning: varchar
+        prompt_version: varchar
+        classified_at: varchar
+
 vars:
   # SLA thresholds in hours, keyed by urgency_label. "Unknown" is intentionally
   # absent so the sla_threshold_hours macro returns NULL for unclassified rows
@@ -42,3 +67,6 @@ vars:
   # fail the build if more than this fraction of closed requests lack a
   # parseable raw_payload.updated_datetime.
   max_unparseable_close_time_pct: 0.01
+
+  # Portal add-on (A2): the federal fiscal year the cohort marts are built for.
+  portal_fiscal_year: 2026
